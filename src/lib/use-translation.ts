@@ -7,11 +7,11 @@ export function useTranslation() {
   
   const t = (key: Parameters<typeof translate>[0]) => translate(key, language);
   
-  const tc = (amount: number) => formatCurrency(amount, language);
+  const tc = (amount: number | null | undefined) => formatCurrency(amount, language);
   
-  const td = (date: Date) => formatDate(date, language);
+  const td = (date: Date | string | null | undefined) => formatDate(date, language);
   
-  const tm = (date: Date) => formatMonthYear(date, language);
+  const tm = (date: Date | string | null | undefined) => formatMonthYear(date, language);
   
   return {
     language,

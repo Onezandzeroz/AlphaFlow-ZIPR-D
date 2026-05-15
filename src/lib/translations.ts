@@ -1984,7 +1984,8 @@ export function t(key: keyof typeof translations, language: Language): string {
 }
 
 // Helper function to format currency in Danish/English style
-export function formatCurrency(amount: number, language: Language): string {
+export function formatCurrency(amount: number | null | undefined, language: Language): string {
+  if (amount == null) return '0,00 kr.';
   if (language === 'da') {
     return amount.toLocaleString('da-DK', {
       style: 'currency',
@@ -1998,15 +1999,18 @@ export function formatCurrency(amount: number, language: Language): string {
 }
 
 // Helper function to format date in Danish/English style
-export function formatDate(date: Date, language: Language): string {
+export function formatDate(date: Date | string | null | undefined, language: Language): string {
+  if (!date) return '-';
+  const d = typeof date === 'string' ? new Date(date) : date;
+  if (isNaN(d.getTime())) return '-';
   if (language === 'da') {
-    return date.toLocaleDateString('da-DK', {
+    return d.toLocaleDateString('da-DK', {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
     });
   }
-  return date.toLocaleDateString('en-GB', {
+  return d.toLocaleDateString('en-GB', {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
@@ -2014,14 +2018,17 @@ export function formatDate(date: Date, language: Language): string {
 }
 
 // Helper function to format month/year
-export function formatMonthYear(date: Date, language: Language): string {
+export function formatMonthYear(date: Date | string | null | undefined, language: Language): string {
+  if (!date) return '-';
+  const d = typeof date === 'string' ? new Date(date) : date;
+  if (isNaN(d.getTime())) return '-';
   if (language === 'da') {
-    return date.toLocaleDateString('da-DK', {
+    return d.toLocaleDateString('da-DK', {
       month: 'long',
       year: 'numeric',
     });
   }
-  return date.toLocaleDateString('en-GB', {
+  return d.toLocaleDateString('en-GB', {
     month: 'long',
     year: 'numeric',
   });

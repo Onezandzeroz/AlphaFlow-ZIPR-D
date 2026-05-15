@@ -118,7 +118,8 @@ export function isSupportedCurrency(currency: string): boolean {
  * Format a number with decimal places for use in PDF tables.
  * Uses comma as decimal separator (Danish convention).
  */
-export function formatNumberForPDF(amount: number, decimals: number = 2): string {
+export function formatNumberForPDF(amount: number | null | undefined, decimals: number = 2): string {
+  if (amount == null) return '0'.padEnd(decimals + 1, '0');
   return amount.toLocaleString('da-DK', {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
