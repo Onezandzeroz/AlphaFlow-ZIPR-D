@@ -244,8 +244,8 @@ export function VATReport({ user }: VATReportProps) {
     const outputVAT = vatRegisterData?.totalOutputVAT || 0;
     const inputVAT = vatRegisterData?.totalInputVAT || 0;
     const netPayable = vatRegisterData?.netVATPayable || 0;
-    const totalSalesAmount = vatRegisterData?.totalRevenue ?? sales.reduce((sum, t) => sum + t.amount, 0);
-    const totalPurchasesAmount = vatRegisterData?.totalExpenses ?? purchases.reduce((sum, t) => sum + t.amount, 0);
+    const totalSalesAmount = vatRegisterData?.totalRevenue ?? sales.reduce((sum, t) => sum + Number(t.amount), 0);
+    const totalPurchasesAmount = vatRegisterData?.totalExpenses ?? purchases.reduce((sum, t) => sum + Number(t.amount), 0);
 
     return {
       outputVAT,

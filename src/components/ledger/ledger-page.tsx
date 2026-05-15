@@ -168,8 +168,8 @@ export function LedgerPage({ user }: LedgerPageProps) {
         type,
         label: getAccountTypeLabel(type, language),
         accounts: groups[type],
-        debitTotal: groups[type].reduce((sum, a) => sum + a.debitTotal, 0),
-        creditTotal: groups[type].reduce((sum, a) => sum + a.creditTotal, 0),
+        debitTotal: groups[type].reduce((sum, a) => sum + Number(a.debitTotal), 0),
+        creditTotal: groups[type].reduce((sum, a) => sum + Number(a.creditTotal), 0),
       }));
   }, [data, language]);
 

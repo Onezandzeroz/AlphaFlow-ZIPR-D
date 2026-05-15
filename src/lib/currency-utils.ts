@@ -82,16 +82,25 @@ export const CURRENCY_CONFIG: Record<string, CurrencyConfig> = {
 export function formatCurrency(amount: number, currency: string = 'DKK'): string {
   const config = CURRENCY_CONFIG[currency] || CURRENCY_CONFIG.DKK;
 
+  // Defensive: convert string/object to number (Prisma Decimal may arrive as string)
+  const num = typeof amount === 'number' ? amount : Number(amount);
+  if (isNaN(num)) {
+    const fallback = (0).toFixed(config.decimals);
+    return config.symbolBeforeAmount
+      ? `${config.symbol}${fallback}`
+      : `${fallback} ${config.symbol}`;
+  }
+
   try {
     return new Intl.NumberFormat(config.locale, {
       style: 'currency',
       currency: config.code,
       minimumFractionDigits: config.decimals,
       maximumFractionDigits: config.decimals,
-    }).format(amount);
+    }).format(num);
   } catch {
     // Fallback if Intl formatting fails
-    const fixed = amount.toFixed(config.decimals);
+    const fixed = num.toFixed(config.decimals);
     if (config.symbolBeforeAmount) {
       return `${config.symbol}${fixed}`;
     }
@@ -120,7 +129,10 @@ export function isSupportedCurrency(currency: string): boolean {
  */
 export function formatNumberForPDF(amount: number | null | undefined, decimals: number = 2): string {
   if (amount == null) return '0'.padEnd(decimals + 1, '0');
-  return amount.toLocaleString('da-DK', {
+  // Defensive: convert string/object to number
+  const num = typeof amount === 'number' ? amount : Number(amount);
+  if (isNaN(num)) return '0'.padEnd(decimals + 1, '0');
+  return num.toLocaleString('da-DK', {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   });

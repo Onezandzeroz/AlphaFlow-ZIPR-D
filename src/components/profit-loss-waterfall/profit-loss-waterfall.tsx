@@ -78,7 +78,7 @@ export function ProfitLossWaterfall({ dateRange }: ProfitLossWaterfallProps) {
         // Expense items reduce the cumulative
         const prevCumulative = waterfall
           .filter((w) => w.type === 'revenue' || w.type === 'subtotal')
-          .reduce((sum, w) => sum + w.amount, 0);
+          .reduce((sum, w) => sum + Number(w.amount), 0);
         base = Math.max(0, prevCumulative + item.cumulative - item.amount);
         // Find the previous cumulative
         const idx = waterfall.indexOf(item);

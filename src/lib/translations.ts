@@ -1984,15 +1984,21 @@ export function t(key: keyof typeof translations, language: Language): string {
 }
 
 // Helper function to format currency in Danish/English style
-export function formatCurrency(amount: number | null | undefined, language: Language): string {
+// Accepts number, string, or Decimal-like object for defensive handling of Prisma Decimal serialization
+export function formatCurrency(amount: number | string | null | undefined, language: Language): string {
   if (amount == null) return '0,00 kr.';
+  // Defensive: convert string/object to number (Prisma Decimal may arrive as string or object)
+  const num = typeof amount === 'number'
+    ? amount
+    : Number(amount);
+  if (isNaN(num)) return '0,00 kr.';
   if (language === 'da') {
-    return amount.toLocaleString('da-DK', {
+    return num.toLocaleString('da-DK', {
       style: 'currency',
       currency: 'DKK',
     });
   }
-  return amount.toLocaleString('en-DK', {
+  return num.toLocaleString('en-DK', {
     style: 'currency',
     currency: 'DKK',
   });

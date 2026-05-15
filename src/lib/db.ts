@@ -20,12 +20,26 @@ import { Prisma } from '@prisma/client'
  * Recursively converts Prisma.Decimal objects to numbers for JSON-safe output.
  * Handles: objects, arrays, Date objects (kept as-is for ISO string conversion),
  * Decimal instances (converted to number), and primitives.
+ *
+ * IMPORTANT: In Prisma v6+, the Decimal constructor name is minified (e.g. "i"),
+ * so we detect Decimal instances by their decimal.js internal structure:
+ *   - `d` (number[]): array of digit groups
+ *   - `e` (number): exponent
+ *   - `s` (number): sign (1 or -1)
+ * This is more reliable than constructor.name or instanceof checks.
  */
+function isDecimalLike(obj: unknown): boolean {
+  if (typeof obj !== 'object' || obj === null || Array.isArray(obj)) return false
+  const o = obj as Record<string, unknown>
+  return Array.isArray(o.d) && typeof o.e === 'number' && typeof o.s === 'number'
+}
+
 function serializeDecimal(obj: unknown): unknown {
   if (obj === null || obj === undefined) return obj
   if (typeof obj === 'number' || typeof obj === 'boolean' || typeof obj === 'string') return obj
   if (obj instanceof Date) return obj
-  if (typeof obj === 'object' && (obj as Record<string, unknown>).constructor?.name === 'Decimal') {
+  // Detect Prisma.Decimal via decimal.js internal structure (works even when constructor name is minified)
+  if (isDecimalLike(obj)) {
     return Number((obj as { toNumber: () => number }).toNumber())
   }
   if (Array.isArray(obj)) return obj.map(serializeDecimal)

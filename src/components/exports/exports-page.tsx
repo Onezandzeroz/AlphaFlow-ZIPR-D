@@ -290,7 +290,7 @@ export function ExportsPage({ user }: ExportsPageProps) {
   const totals = useMemo(() => {
     const sales = filteredTransactions.filter(t => t.type === 'SALE' || !t.type);
     const purchases = filteredTransactions.filter(t => t.type === 'PURCHASE');
-    const totalAmount = filteredTransactions.reduce((sum, t) => sum + t.amount, 0);
+    const totalAmount = filteredTransactions.reduce((sum, t) => sum + Number(t.amount), 0);
     // Use VAT register as the single source of truth
     const outputVAT = vatSummaryCSV?.totalOutputVAT ?? 0;
     const inputVAT = vatSummaryCSV?.totalInputVAT ?? 0;
@@ -307,7 +307,7 @@ export function ExportsPage({ user }: ExportsPageProps) {
   const saftTotals = useMemo(() => {
     const sales = saftFilteredTransactions.filter(t => t.type === 'SALE' || !t.type);
     const purchases = saftFilteredTransactions.filter(t => t.type === 'PURCHASE');
-    const totalAmount = saftFilteredTransactions.reduce((sum, t) => sum + t.amount, 0);
+    const totalAmount = saftFilteredTransactions.reduce((sum, t) => sum + Number(t.amount), 0);
     // Use VAT register as the single source of truth
     const outputVAT = vatSummarySAFT?.totalOutputVAT ?? 0;
     const inputVAT = vatSummarySAFT?.totalInputVAT ?? 0;

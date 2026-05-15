@@ -484,11 +484,11 @@ export function Dashboard({ user, onNavigate, onboardingStepJustDone, onOnboardi
       .filter((acc) => acc.accountType === 'ASSET' && acc.balance > 0 &&
         // Match receivable accounts (1200 series in Danish chart of accounts)
         acc.accountNumber.startsWith('12'))
-      .reduce((sum, acc) => sum + acc.balance, 0);
+      .reduce((sum, acc) => sum + Number(acc.balance), 0);
 
     // Paid total from ledger: sum of bank account credits from invoice cash receipts
     // For simplicity, derive paid total as total invoiced minus outstanding receivable
-    const totalInvoiced = activeInvoices.reduce((sum, inv) => sum + (inv.total || 0), 0);
+    const totalInvoiced = activeInvoices.reduce((sum, inv) => sum + Number(inv.total || 0), 0);
     const paidFromJournal = Math.max(0, totalInvoiced - receivableBalance);
 
     return {
@@ -497,7 +497,7 @@ export function Dashboard({ user, onNavigate, onboardingStepJustDone, onOnboardi
       paidCount: paidInvoices.length,
       paidTotal: paidFromJournal, // Derived: total invoiced − receivable balance
       overdueCount: overdueInvoices.length,
-      overdueTotal: overdueInvoices.reduce((sum, inv) => sum + (inv.total || 0), 0), // Document-level estimate
+      overdueTotal: overdueInvoices.reduce((sum, inv) => sum + Number(inv.total || 0), 0), // Document-level estimate
     };
   }, [invoices, ledgerAccounts]);
 
@@ -775,7 +775,7 @@ export function Dashboard({ user, onNavigate, onboardingStepJustDone, onOnboardi
   // ─── Journal entry total helper ─────────────────────────────────
 
   const getJournalEntryTotal = (entry: JournalEntry) => {
-    return entry.lines.reduce((sum, line) => sum + line.debit, 0);
+    return entry.lines.reduce((sum, line) => sum + Number(line.debit), 0);
   };
 
   // ─── Relative time helper ──────────────────────────────────────

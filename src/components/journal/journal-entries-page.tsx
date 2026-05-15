@@ -802,8 +802,8 @@ export function JournalEntriesPage({ user }: JournalEntriesPageProps) {
             <div className="divide-y divide-gray-100 dark:divide-gray-700/50">
               {filteredEntries.map((entry) => {
                 const isExpanded = expandedIds.has(entry.id);
-                const entryTotalDebit = entry.lines.reduce((s, l) => s + (l.debit || 0), 0);
-                const entryTotalCredit = entry.lines.reduce((s, l) => s + (l.credit || 0), 0);
+                const entryTotalDebit = entry.lines.reduce((s, l) => s + Number(l.debit || 0), 0);
+                const entryTotalCredit = entry.lines.reduce((s, l) => s + Number(l.credit || 0), 0);
                 const isEntryBalanced = Math.abs(entryTotalDebit - entryTotalCredit) < 0.005;
 
                 return (
@@ -958,11 +958,11 @@ export function JournalEntriesPage({ user }: JournalEntriesPageProps) {
                               </div>
                               {/* Debit */}
                               <div className="col-span-3 sm:col-span-2 text-right font-mono text-gray-900 dark:text-white">
-                                {line.debit ? formatCurrencyValue(line.debit, language) : ''}
+                                {line.debit ? formatCurrencyValue(Number(line.debit), language) : ''}
                               </div>
                               {/* Credit */}
                               <div className="col-span-3 sm:col-span-2 text-right font-mono text-gray-900 dark:text-white">
-                                {line.credit ? formatCurrencyValue(line.credit, language) : ''}
+                                {line.credit ? formatCurrencyValue(Number(line.credit), language) : ''}
                               </div>
                               {/* Description */}
                               <div className="col-span-2 sm:col-span-3 text-xs text-gray-500 dark:text-gray-400 hidden sm:block truncate">

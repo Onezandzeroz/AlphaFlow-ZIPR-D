@@ -495,7 +495,7 @@ export function BackupPage({ user }: BackupPageProps) {
     // FALLBACK: Compute from the backups list (if scheduler-status API hasn't loaded yet)
     const completedBackups = backups.filter((b) => b.status === 'completed');
     const latestBackup = completedBackups.length > 0 ? completedBackups[0] : null;
-    const totalStorage = completedBackups.reduce((sum, b) => sum + b.fileSize, 0);
+    const totalStorage = completedBackups.reduce((sum, b) => sum + Number(b.fileSize), 0);
     const failedCount = backups.filter((b) => b.status === 'failed').length;
 
     return {

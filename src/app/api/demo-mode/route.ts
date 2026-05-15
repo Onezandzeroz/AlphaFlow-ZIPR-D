@@ -56,11 +56,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ── Reseed demo company (superDev only, destructive) ────────
+    // ── Reseed demo company (any user, destructive) ────────────
     if (action === 'reseed') {
-      if (!ctx.isSuperDev) {
-        return NextResponse.json({ error: 'Forbidden – only SuperDev can reseed demo company' }, { status: 403 });
-      }
 
       const demoCompany = await db.company.findFirst({
         where: { isDemo: true, isActive: true, cvrNumber: '29876543' },
@@ -112,15 +109,8 @@ export async function POST(request: NextRequest) {
 
       // ctx.isDemoCompany is now verified against the demo company's CVR number
       // (see session.ts getAuthContext), so if it's true, we're already in the demo company.
-      if (ctx.isDemoCompany) {
-        return NextResponse.json({
-          message: 'Demo mode enabled',
-          demoModeEnabled: true,
-          isDemoCompany: true,
-          activeCompanyId: ctx.activeCompanyId,
-          activeCompanyName: ctx.activeCompanyName,
-        });
-      }
+      // Even when already in demo mode, we ALWAYS re-seed to guarantee fresh data.
+      // The demo seed is fast and idempotent — stale data is worse than a brief delay.
 
       // Find the shared demo company (identified by CVR number)
       let demoCompany = await db.company.findFirst({

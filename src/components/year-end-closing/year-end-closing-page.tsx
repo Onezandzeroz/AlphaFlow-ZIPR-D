@@ -274,8 +274,8 @@ export function YearEndClosingPage({ user }: { user: User }) {
       [
         isDanish ? 'TOTAL' : 'TOTAL',
         '',
-        je.lines.reduce((s, l) => s + l.debit, 0).toFixed(2),
-        je.lines.reduce((s, l) => s + l.credit, 0).toFixed(2),
+        je.lines.reduce((s, l) => s + Number(l.debit), 0).toFixed(2),
+        je.lines.reduce((s, l) => s + Number(l.credit), 0).toFixed(2),
       ],
     ];
 
@@ -576,10 +576,10 @@ export function YearEndClosingPage({ user }: { user: User }) {
                       {isDanish ? 'TOTAL' : 'TOTAL'}
                     </TableCell>
                     <TableCell className="text-right font-mono text-sm text-green-600 dark:text-green-400">
-                      {tc(result.journalEntry.lines.reduce((s, l) => s + l.debit, 0))}
+                      {tc(result.journalEntry.lines.reduce((s, l) => s + Number(l.debit), 0))}
                     </TableCell>
                     <TableCell className="text-right font-mono text-sm text-red-600 dark:text-red-400">
-                      {tc(result.journalEntry.lines.reduce((s, l) => s + l.credit, 0))}
+                      {tc(result.journalEntry.lines.reduce((s, l) => s + Number(l.credit), 0))}
                     </TableCell>
                   </TableRow>
                 </TableBody>

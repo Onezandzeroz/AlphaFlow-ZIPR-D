@@ -92,6 +92,7 @@ const DEPRECIATION_Q = 10000    // quarterly
 
 const OPENING_BALANCE = 500000
 const CARRIED_RECEIVABLES = 200000 // pre-existing receivables from prior period
+const IT_EQUIPMENT_COST = 400000 // historical cost of IT equipment at company formation
 
 // Service descriptions for invoices
 const SERVICE_DESCRIPTIONS = [
@@ -590,6 +591,18 @@ function buildJournalEntries(
     ],
   })
 
+  // ── Opening balance: IT Equipment purchase at formation ──
+  entries.push({
+    date: d(PREV_YEAR, 1, 1),
+    description: 'Indkøb af IT-udstyr ved stiftelse – servere, workstations og netværk',
+    reference: 'ANLÆG-ÅBNING',
+    status: 'POSTED',
+    lines: [
+      { accountNumber: '1800', debit: IT_EQUIPMENT_COST, credit: 0, vatCode: 'NONE', description: 'IT-udstyr til indskud' },
+      { accountNumber: '3000', debit: 0, credit: IT_EQUIPMENT_COST, vatCode: 'NONE', description: 'Finansieret af selskabskapital' },
+    ],
+  })
+
   // ── Carried-forward receivables from prior period ──
   const carriedVat = vat25(r(CARRIED_RECEIVABLES / 1.25))
   const carriedNet = r(CARRIED_RECEIVABLES - carriedVat)
@@ -614,6 +627,19 @@ function buildJournalEntries(
     lines: [
       { accountNumber: '1100', debit: CARRIED_RECEIVABLES, credit: 0, vatCode: 'NONE', description: 'Indbetaling fra kunde' },
       { accountNumber: '1200', debit: 0, credit: CARRIED_RECEIVABLES, vatCode: 'NONE', description: 'Kreditering af tilgodehavende' },
+    ],
+  })
+
+  // ── Settlement of prior-period output VAT (Jan 2) ──
+  // The carried-forward receivables included output VAT that must be settled.
+  entries.push({
+    date: d(PREV_YEAR, 1, 2),
+    description: 'Momsafregning foregående periode – indbetaling til Skattestyrelsen',
+    reference: 'MOMS-REST',
+    status: 'POSTED',
+    lines: [
+      { accountNumber: '4510', debit: carriedVat, credit: 0, vatCode: 'NONE', description: 'Udgående moms foregående periode afregnet' },
+      { accountNumber: '1100', debit: 0, credit: carriedVat, vatCode: 'NONE', description: 'Momsbetaling fra bankkonto' },
     ],
   })
 
@@ -769,25 +795,51 @@ function buildJournalEntries(
   }
 
   // ── Year-end closing for previous year ──
-  const prevYearRevenue = calcTotalAccountCredit(PREV_YEAR, '4100')
-  const prevYearExpenses =
-    calcTotalAccountDebit(PREV_YEAR, '7000') +
-    calcTotalAccountDebit(PREV_YEAR, '7100') +
-    calcTotalAccountDebit(PREV_YEAR, '7200') +
-    calcTotalAccountDebit(PREV_YEAR, '8000') +
-    calcTotalAccountDebit(PREV_YEAR, '8400') +
-    calcTotalAccountDebit(PREV_YEAR, '8600') +
-    calcTotalAccountDebit(PREV_YEAR, '8900')
-  const prevYearNetIncome = r(prevYearRevenue - prevYearExpenses)
+  // Danish year-end closing must:
+  // 1. Close revenue accounts (debit to zero)
+  // 2. Close expense accounts (credit to zero)
+  // 3. Transfer net income to retained earnings (3300 → 3400)
 
-  if (prevYearNetIncome > 0) {
+  const prevYearRevenue = calcTotalAccountCredit(PREV_YEAR, '4100')
+  const prevYearTotalExpenses = r(
+    SALARY_GROSS * 12 +
+    SALARY_EMPLOYER * 12 +
+    SALARY_PENSION * 12 +
+    RENT_NET * 12 +
+    INSURANCE_Q * 4 +
+    TELECOM_NET * 12 +
+    DEPRECIATION_Q * 4
+  )
+  const prevYearNetIncome = r(prevYearRevenue - prevYearTotalExpenses)
+
+  if (prevYearRevenue > 0) {
+    // Entry 1: Close revenue account to 3300 (Årets resultat)
     entries.push({
       date: d(PREV_YEAR, 12, 31),
-      description: `Årsafslut ${PREV_YEAR} – resultatoverførsel til overskud`,
+      description: `Årsafslut ${PREV_YEAR} – lukning af omsætningskonto`,
+      reference: `AARSAFSLUT-OMS-${PREV_YEAR}`,
+      status: 'POSTED',
+      lines: [
+        { accountNumber: '4100', debit: prevYearRevenue, credit: 0, vatCode: 'NONE', description: 'Salg af tjenesteydelser lukkes' },
+        { accountNumber: '3300', debit: 0, credit: prevYearRevenue, vatCode: 'NONE', description: 'Omsætning overført til årsresultat' },
+      ],
+    })
+
+    // Entry 2: Close expense accounts + transfer net income to retained earnings
+    entries.push({
+      date: d(PREV_YEAR, 12, 31),
+      description: `Årsafslut ${PREV_YEAR} – lukning af omkostningskonti og resultatoverførsel`,
       reference: `AARSAFSLUT-${PREV_YEAR}`,
       status: 'POSTED',
       lines: [
-        { accountNumber: '3300', debit: prevYearNetIncome, credit: 0, vatCode: 'NONE', description: 'Årets resultat lukkes' },
+        { accountNumber: '3300', debit: prevYearRevenue, credit: 0, vatCode: 'NONE', description: 'Omsætning fra årsresultat' },
+        { accountNumber: '7000', debit: 0, credit: SALARY_GROSS * 12, vatCode: 'NONE', description: 'Lønninger lukkes' },
+        { accountNumber: '7100', debit: 0, credit: SALARY_EMPLOYER * 12, vatCode: 'NONE', description: 'Arbejdsgiverbidrag lukkes' },
+        { accountNumber: '7200', debit: 0, credit: SALARY_PENSION * 12, vatCode: 'NONE', description: 'Pensionsbidrag lukkes' },
+        { accountNumber: '8000', debit: 0, credit: RENT_NET * 12, vatCode: 'NONE', description: 'Husleje lukkes' },
+        { accountNumber: '8400', debit: 0, credit: INSURANCE_Q * 4, vatCode: 'NONE', description: 'Forsikring lukkes' },
+        { accountNumber: '8600', debit: 0, credit: TELECOM_NET * 12, vatCode: 'NONE', description: 'Telefon og internet lukkes' },
+        { accountNumber: '8900', debit: 0, credit: DEPRECIATION_Q * 4, vatCode: 'NONE', description: 'Afskrivning lukkes' },
         { accountNumber: '3400', debit: 0, credit: prevYearNetIncome, vatCode: 'NONE', description: 'Overført til overskud (egenkapital)' },
       ],
     })
@@ -802,14 +854,6 @@ function buildJournalEntries(
 /** Helper: sum all debit amounts for a given account and year across existing entries */
 function calcTotalAccountDebit(year: number, accountNumber: string): number {
   let total = 0
-  // Revenue entries: 2 per month × 12 months
-  for (let m = 1; m <= 12; m++) {
-    const items = REVENUE_MAP.get(`${year}-${m}`)
-    if (!items) continue
-    for (let i = 0; i < items.length; i++) {
-      if (year === PREV_YEAR && m === 6 && i === 1) continue
-    }
-  }
   // Salary: 12 months
   if (accountNumber === '7000') total += SALARY_GROSS * 12
   if (accountNumber === '7100') total += SALARY_EMPLOYER * 12
@@ -828,6 +872,10 @@ function calcTotalAccountDebit(year: number, accountNumber: string): number {
 /** Helper: sum revenue credits for a given year */
 function calcTotalAccountCredit(year: number, _accountNumber: string): number {
   let total = 0
+  // Include carried-forward revenue from opening balance (only for PREV_YEAR)
+  if (year === PREV_YEAR) {
+    total += carriedNet
+  }
   for (let m = 1; m <= 12; m++) {
     const items = REVENUE_MAP.get(`${year}-${m}`)
     if (!items) continue
@@ -940,6 +988,19 @@ function buildBankStatements(): BankStatementSeed[] {
           balance,
           reconciliationStatus: 'MATCHED',
         })
+
+        // Prior-period VAT settlement (prev year Jan only)
+        if (year === PREV_YEAR && m === 1 && q === 0) {
+          balance = Math.round(balance - carriedVat)
+          lines.push({
+            date: d(year, 1, 2),
+            description: 'Skattestyrelsen – Moms foregående periode',
+            reference: 'MOMS-REST',
+            amount: -carriedVat,
+            balance,
+            reconciliationStatus: 'MATCHED',
+          })
+        }
 
         // Carried receivables payment (prev year Jan only)
         if (year === PREV_YEAR && m === 1 && q === 0) {
@@ -1217,6 +1278,7 @@ export async function seedDemoCompany(demoCompanyId: string, systemUserId: strin
         // invoiceId is NOT set for PURCHASE/SALARY/BANK transactions
         // (sales come from Invoice records, not DB transactions)
         invoiceId: null,
+        contactId: t.contactIndex !== undefined ? contactIds[t.contactIndex] : null,
       },
     })
     txIdMap.set(t.key, tx.id)

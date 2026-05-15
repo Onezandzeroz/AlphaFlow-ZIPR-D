@@ -337,9 +337,9 @@ export function BudgetPage({ user }: { user: User }) {
         type,
         label: getAccountTypeLabel(type, language),
         entries: groups[type],
-        totalBudget: groups[type].reduce((sum, e) => sum + e.totalBudget, 0),
-        totalActual: groups[type].reduce((sum, e) => sum + e.totalActual, 0),
-        totalVariance: groups[type].reduce((sum, e) => sum + e.totalVariance, 0),
+        totalBudget: groups[type].reduce((sum, e) => sum + Number(e.totalBudget), 0),
+        totalActual: groups[type].reduce((sum, e) => sum + Number(e.totalActual), 0),
+        totalVariance: groups[type].reduce((sum, e) => sum + Number(e.totalVariance), 0),
       }));
   }, [detail, language]);
 
@@ -348,8 +348,8 @@ export function BudgetPage({ user }: { user: User }) {
     if (!detail) return [];
     return MONTH_LABELS.map((label, idx) => {
       const monthKey = MONTHS[idx];
-      const budgetSum = detail.entries.reduce((s, e) => s + (e.budget[monthKey] || 0), 0);
-      const actualSum = detail.entries.reduce((s, e) => s + (e.actual[monthKey] || 0), 0);
+      const budgetSum = detail.entries.reduce((s, e) => s + Number(e.budget[monthKey] || 0), 0);
+      const actualSum = detail.entries.reduce((s, e) => s + Number(e.actual[monthKey] || 0), 0);
       return { month: label, budget: Math.round(budgetSum), actual: Math.round(actualSum) };
     });
   }, [detail]);

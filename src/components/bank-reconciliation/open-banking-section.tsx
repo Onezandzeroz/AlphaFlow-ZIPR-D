@@ -319,12 +319,12 @@ export function OpenBankingSection({ user, onSyncComplete }: OpenBankingSectionP
   );
 
   const totalBalance = useMemo(
-    () => activeConnections.reduce((sum, c) => sum + (c.currentBalance || 0), 0),
+    () => activeConnections.reduce((sum, c) => sum + Number(c.currentBalance || 0), 0),
     [activeConnections]
   );
 
   const totalUnmatched = useMemo(
-    () => connections.reduce((sum, c) => sum + c.unmatchedCount, 0),
+    () => connections.reduce((sum, c) => sum + Number(c.unmatchedCount), 0),
     [connections]
   );
 

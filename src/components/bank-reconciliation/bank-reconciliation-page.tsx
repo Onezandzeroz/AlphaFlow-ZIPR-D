@@ -212,7 +212,7 @@ export function BankReconciliationPage({ user }: BankReconciliationPageProps) {
     const allLines = data.bankStatements.flatMap((s) => s.lines);
     const matchedCount = allLines.filter((l) => l.reconciliationStatus === 'MATCHED' || l.reconciliationStatus === 'MANUAL').length;
     const unmatchedCount = allLines.filter((l) => l.reconciliationStatus === 'UNMATCHED').length;
-    const totalAmount = allLines.reduce((sum, l) => sum + l.amount, 0);
+    const totalAmount = allLines.reduce((sum, l) => sum + Number(l.amount), 0);
 
     return {
       totalStatements: data.bankStatements.length,

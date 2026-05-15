@@ -509,8 +509,8 @@ export function TransactionsPage({ user, hideHeader, defaultTypeFilter }: Transa
     const sales = transactions.filter(t => t.type === 'SALE' || !t.type);
     const purchases = transactions.filter(t => t.type === 'PURCHASE');
     
-    const salesAmount = sales.reduce((sum, t) => sum + t.amount, 0);
-    const purchasesAmount = purchases.reduce((sum, t) => sum + t.amount, 0);
+    const salesAmount = sales.reduce((sum, t) => sum + Number(t.amount), 0);
+    const purchasesAmount = purchases.reduce((sum, t) => sum + Number(t.amount), 0);
 
     // Use VAT register as the single source of truth for VAT amounts
     const outputVAT = vatSummary?.totalOutputVAT ?? 0;

@@ -901,11 +901,11 @@ export function InvoicesPage({ user, initialView, onInitialViewConsumed }: Invoi
       return paidDate.getMonth() === currentMonth && paidDate.getFullYear() === currentYear;
     });
     return {
-      totalInvoiced: active.reduce((sum, i) => sum + i.total, 0),
-      outstanding: active.filter(i => i.status === 'SENT' || getInvoiceDisplayStatus(i) === 'OVERDUE').reduce((sum, i) => sum + i.total, 0),
-      overdueAmount: overdueInvoices.reduce((sum, i) => sum + i.total, 0),
-      paid: active.filter(i => i.status === 'PAID').reduce((sum, i) => sum + i.total, 0),
-      paidThisMonth: paidThisMonth.reduce((sum, i) => sum + i.total, 0),
+      totalInvoiced: active.reduce((sum, i) => sum + Number(i.total), 0),
+      outstanding: active.filter(i => i.status === 'SENT' || getInvoiceDisplayStatus(i) === 'OVERDUE').reduce((sum, i) => sum + Number(i.total), 0),
+      overdueAmount: overdueInvoices.reduce((sum, i) => sum + Number(i.total), 0),
+      paid: active.filter(i => i.status === 'PAID').reduce((sum, i) => sum + Number(i.total), 0),
+      paidThisMonth: paidThisMonth.reduce((sum, i) => sum + Number(i.total), 0),
       overdueCount: overdueInvoices.length,
       draftCount: invoices.filter(i => i.status === 'DRAFT').length,
     };
