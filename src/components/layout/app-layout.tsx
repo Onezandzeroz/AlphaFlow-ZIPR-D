@@ -686,8 +686,8 @@ export function AppLayout({
                 <ShieldCheck className="h-4 w-4 shrink-0" />
                 <span className="font-medium truncate">
                   {language === 'da'
-                    ? 'Demo-virksomhed: Nordisk Erhverv ApS'
-                    : 'Demo Company: Nordisk Erhverv ApS'}
+                    ? `Demo-virksomhed: ${user.activeCompanyName || 'Nordisk Erhverv ApS'}`
+                    : `Demo Company: ${user.activeCompanyName || 'Nordisk Erhverv ApS'}`}
                 </span>
                 <span className="hidden sm:inline text-teal-100 dark:text-teal-200">
                   — {language === 'da' ? 'AppOwner-tilstand — alle ændringer tilladt' : 'AppOwner Mode — full edit access'}
@@ -730,8 +730,8 @@ export function AppLayout({
                 <FlaskConical className="h-4 w-4 shrink-0" />
                 <span className="font-medium truncate">
                   {language === 'da'
-                    ? 'Demo-virksomhed: Nordisk Erhverv ApS'
-                    : 'Demo Company: Nordisk Erhverv ApS'}
+                    ? `Demo-virksomhed: ${user.activeCompanyName || 'Nordisk Erhverv ApS'}`
+                    : `Demo Company: ${user.activeCompanyName || 'Nordisk Erhverv ApS'}`}
                 </span>
                 <span className="hidden sm:inline text-amber-100 dark:text-amber-200">
                   — {language === 'da' ? 'Skrivebeskyttet' : 'Read-only'}

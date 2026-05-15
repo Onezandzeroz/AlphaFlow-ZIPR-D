@@ -154,6 +154,7 @@ export async function POST(
           bankRegistration: '',
           invoicePrefix: 'INV',
           currentYear: new Date().getFullYear(),
+          isDemo: false,
         },
       });
 

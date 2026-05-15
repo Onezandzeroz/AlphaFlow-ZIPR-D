@@ -114,6 +114,7 @@ export async function POST(request: NextRequest) {
         bankRegistration: '',
         invoicePrefix: 'INV',
         currentYear: new Date().getFullYear(),
+        isDemo: false,
         ...(inheritedWidgets !== undefined && { dashboardWidgets: inheritedWidgets as Record<string, unknown> }),
       },
     });

@@ -125,6 +125,7 @@ export async function POST(request: NextRequest) {
         cvrNumber: cvrNumber || '',
         invoicePrefix: invoicePrefix?.toUpperCase() || 'INV',
         currentYear: new Date().getFullYear(),
+        isDemo: false,
         bankName: bankName || '',
         bankAccount: bankAccount || '',
         bankRegistration: bankRegistration || '',

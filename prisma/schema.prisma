@@ -182,7 +182,7 @@ model Company {
   dashboardWidgets     Json?
 
   // Meta
-  isDemo               Boolean  @default(true)  // Demo company flag — the ONLY isDemo field in the data model
+  isDemo               Boolean  @default(false)  // Demo company flag — only the shared demo company should be true
   isActive             Boolean  @default(true)
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
