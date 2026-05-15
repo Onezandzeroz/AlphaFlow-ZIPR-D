@@ -62,7 +62,18 @@ export function SettingsPage({ user, onNavigate }: SettingsPageProps) {
   // ── State ──
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState('company');
+
+  // Read initial tab from URL query param (e.g. #settings?tab=access)
+  const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window === 'undefined') return 'company';
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('tab');
+    // Clean up the query param so it doesn't persist on reload
+    if (tab) {
+      window.history.replaceState(null, '', window.location.pathname + window.location.hash);
+    }
+    return tab && ['company', 'account', 'defaults', 'access', 'oversight'].includes(tab) ? tab : 'company';
+  });
 
   const [prefs, setPrefs] = useState<UserPreferences>({
     theme: 'system',

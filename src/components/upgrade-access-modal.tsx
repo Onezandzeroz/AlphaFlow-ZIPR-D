@@ -65,12 +65,12 @@ export function UpgradeAccessModal() {
 
   const handleGoToSettings = useCallback(() => {
     dismiss();
-    window.location.hash = '#settings';
+    window.location.hash = '#settings?tab=access';
   }, [dismiss]);
 
   const handlePurchaseToken = useCallback(() => {
     dismiss();
-    window.location.hash = '#settings';
+    window.location.hash = '#settings?tab=access';
   }, [dismiss]);
 
   if (!isOpen) return null;
@@ -110,22 +110,22 @@ export function UpgradeAccessModal() {
           {/* Image + Title */}
           <div className="relative flex items-center gap-4">
             {/* .tbkey image */}
-            <div className="flex-shrink-0 h-16 w-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/20 shadow-lg overflow-hidden">
+            <div className="flex-shrink-0 h-[136px] w-[136px] rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/20 shadow-lg overflow-hidden">
               {isExpired ? (
                 <div className="relative">
                   <img
                     src="/tbkey.png"
                     alt=".tbkey"
-                    className="h-10 w-10 object-contain opacity-60"
+                    className="h-24 w-24 object-contain opacity-60"
                     draggable={false}
                   />
-                  <Clock className="absolute -top-1.5 -right-1.5 h-4 w-4 text-white bg-amber-600 rounded-full p-0.5" />
+                  <Clock className="absolute -top-2 -right-2 h-5 w-5 text-white bg-amber-600 rounded-full p-0.5" />
                 </div>
               ) : (
                 <img
                   src="/tbkey.png"
                   alt=".tbkey"
-                  className="h-10 w-10 object-contain drop-shadow-sm"
+                  className="h-24 w-24 object-contain drop-shadow-sm"
                   draggable={false}
                 />
               )}
