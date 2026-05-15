@@ -43,11 +43,13 @@ type View = 'dashboard' | 'transactions' | 'vat-report' | 'exports' | 'invoices'
 
 const VALID_VIEWS: View[] = ['dashboard', 'transactions', 'vat-report', 'exports', 'invoices', 'backups', 'audit-log', 'accounts', 'journal', 'contacts', 'periods', 'ledger', 'reports', 'bank-recon', 'year-end', 'aging', 'cash-flow', 'recurring', 'budget', 'settings', 'settings-company'];
 
-// Get initial view from URL hash
+// Get initial view from URL hash (supports #settings?tab=access)
 function getInitialView(): View {
   if (typeof window === 'undefined') return 'dashboard';
-  const hash = window.location.hash.replace('#', '') as View;
-  return hash && VALID_VIEWS.includes(hash) ? hash : 'dashboard';
+  const raw = window.location.hash.replace('#', '');
+  const [hash] = raw.split('?');
+  const view = hash as View;
+  return view && VALID_VIEWS.includes(view) ? view : 'dashboard';
 }
 
 export default function Home() {
