@@ -135,12 +135,27 @@ export default function Home() {
       setCurrentView(view);
     };
 
+    // Also handle external hash changes (e.g. links, programmatic #hash sets)
+    const handleHashChange = () => {
+      const raw = window.location.hash.replace('#', '');
+      const [hash] = raw.split('?');
+      const view = hash as View;
+      if (view && VALID_VIEWS.includes(view)) {
+        setCurrentView(view);
+        window.history.replaceState({ view }, '', window.location.hash);
+      }
+    };
+
     window.addEventListener('popstate', handlePopState);
+    window.addEventListener('hashchange', handleHashChange);
 
     // Set initial history state so back button works from first navigation
     window.history.replaceState({ view: currentView }, '', `#${currentView}`);
 
-    return () => window.removeEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('hashchange', handleHashChange);
+    };
   }, [currentView]);
 
   // ─── Mobile swipe navigation (must be before any early returns) ──
