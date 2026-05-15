@@ -128,25 +128,21 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Send verification email (don't block registration if it fails)
-    try {
-      const verificationToken = crypto.randomBytes(32).toString('hex');
-      await db.user.update({
-        where: { id: user.id },
-        data: { emailVerificationToken: verificationToken },
+    // Send verification email — fire-and-forget so SMTP latency doesn't block the response
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    await db.user.update({
+      where: { id: user.id },
+      data: { emailVerificationToken: verificationToken },
+    });
+    sendVerificationEmail(normalizedEmail, verificationToken, 'da', company.id)
+      .then((emailResult) => {
+        if (!emailResult.success) {
+          logger.warn(`Verification email failed to send for ${normalizedEmail}, logId=${emailResult.logId}`);
+        }
+      })
+      .catch((emailError) => {
+        logger.warn('Failed to send verification email during registration:', emailError);
       });
-      const emailResult = await sendVerificationEmail(
-        normalizedEmail,
-        verificationToken,
-        'da',
-        company.id
-      );
-      if (!emailResult.success) {
-        logger.warn(`Verification email failed to send for ${normalizedEmail}, logId=${emailResult.logId}`);
-      }
-    } catch (emailError) {
-      logger.warn('Failed to send verification email during registration:', emailError);
-    }
 
     // NOTE: We do NOT auto-seed the chart of accounts here.
     // The onboarding flow (Step 2) lets the user explicitly seed their accounts,

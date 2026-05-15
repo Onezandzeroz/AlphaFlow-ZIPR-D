@@ -82,6 +82,13 @@ function getTransport(): TransportResult {
           host: process.env.SMTP_HOST!,
           port: parseInt(process.env.SMTP_PORT || '587', 10),
           secure: parseInt(process.env.SMTP_PORT || '587', 10) === 465,
+          pool: true,
+          maxConnections: 5,
+          maxMessages: 100,
+          rateLimit: 10,
+          connectionTimeout: 10000,
+          greetingTimeout: 10000,
+          socketTimeout: 30000,
           auth: {
             user: process.env.SMTP_USER!,
             pass: process.env.SMTP_PASS!,
@@ -139,24 +146,19 @@ export async function sendEmail(opts: SendEmailOptions): Promise<{ success: bool
 
     const status: string = isSmtpConfigured ? 'sent' : 'dev-logged';
 
-    // Log to database — separate try/catch so DB failure doesn't
-    // make a successful SMTP send appear to fail
-    try {
-      await db.emailLog.create({
-        data: {
-          id: logId,
-          to: opts.to,
-          subject: opts.subject,
-          template: opts.template,
-          status,
-          metadata: (opts.metadata ?? null) as Prisma.InputJsonValue,
-          companyId: opts.companyId ?? null,
-        },
-      });
-    } catch (dbError) {
-      // DB write failed but email was sent — log but don't fail
+    // Log to database — fire-and-forget so DB latency doesn't block the response
+    const logData = {
+      id: logId,
+      to: opts.to,
+      subject: opts.subject,
+      template: opts.template,
+      status,
+      metadata: (opts.metadata ?? null) as Prisma.InputJsonValue,
+      companyId: opts.companyId ?? null,
+    };
+    db.emailLog.create({ data: logData }).catch((dbError) => {
       logger.warn(`[EMAIL] Email was ${status} but DB log write failed for logId=${logId}`, dbError);
-    }
+    });
 
     // In dev mode, log the email to console for easy inspection
     if (!isSmtpConfigured) {
@@ -180,23 +182,21 @@ export async function sendEmail(opts: SendEmailOptions): Promise<{ success: bool
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
 
-    // Log failure to database
-    try {
-      await db.emailLog.create({
-        data: {
-          id: logId,
-          to: opts.to,
-          subject: opts.subject,
-          template: opts.template,
-          status: 'failed',
-          errorMessage,
-          metadata: (opts.metadata ?? null) as Prisma.InputJsonValue,
-          companyId: opts.companyId ?? null,
-        },
-      });
-    } catch (dbError) {
+    // Log failure to database — fire-and-forget
+    db.emailLog.create({
+      data: {
+        id: logId,
+        to: opts.to,
+        subject: opts.subject,
+        template: opts.template,
+        status: 'failed',
+        errorMessage,
+        metadata: (opts.metadata ?? null) as Prisma.InputJsonValue,
+        companyId: opts.companyId ?? null,
+      },
+    }).catch((dbError) => {
       logger.error('[EMAIL] Failed to write email log:', dbError);
-    }
+    });
 
     logger.error(`[EMAIL] ❌ Failed to send to=${opts.to} from=${getEmailFrom()}: ${errorMessage}`);
     return { success: false, logId };

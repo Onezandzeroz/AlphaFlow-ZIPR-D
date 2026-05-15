@@ -44,12 +44,16 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // Send password reset email (don't block response)
-      const result = await sendPasswordResetEmail(user.email, token, 'da');
-
-      if (!result.success) {
-        logger.warn(`Password reset email failed for user ${user.id}, logId=${result.logId}`);
-      }
+      // Send password reset email — fire-and-forget so SMTP latency doesn't block the response
+      sendPasswordResetEmail(user.email, token, 'da')
+        .then((result) => {
+          if (!result.success) {
+            logger.warn(`Password reset email failed for user ${user.id}, logId=${result.logId}`);
+          }
+        })
+        .catch((emailError) => {
+          logger.warn('Failed to send password reset email:', emailError);
+        });
     }
 
     // Always return success to prevent email enumeration

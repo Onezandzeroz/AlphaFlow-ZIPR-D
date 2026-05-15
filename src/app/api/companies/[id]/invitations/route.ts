@@ -206,23 +206,24 @@ export async function POST(
       },
     });
 
-    // Send invitation email (don't block invitation creation if it fails)
-    try {
-      const emailResult = await sendInvitationEmail(
-        normalizedEmail,
-        company.name,
-        inviteRole,
-        invitation.token,
-        'da',
-        companyId,
-        invitePassword
-      );
-      if (!emailResult.success) {
-        logger.warn(`Invitation email failed for ${normalizedEmail}, logId=${emailResult.logId}`);
-      }
-    } catch (emailError) {
-      logger.warn('Failed to send invitation email:', emailError);
-    }
+    // Send invitation email — fire-and-forget so SMTP latency doesn't block the response
+    sendInvitationEmail(
+      normalizedEmail,
+      company.name,
+      inviteRole,
+      invitation.token,
+      'da',
+      companyId,
+      invitePassword
+    )
+      .then((emailResult) => {
+        if (!emailResult.success) {
+          logger.warn(`Invitation email failed for ${normalizedEmail}, logId=${emailResult.logId}`);
+        }
+      })
+      .catch((emailError) => {
+        logger.warn('Failed to send invitation email:', emailError);
+      });
 
     // Audit: log invitation creation
     await auditCreate(ctx.id, 'Invitation', invitation.id, { email: normalizedEmail, role: inviteRole, companyId }, requestMetadata(request), ctx.activeCompanyId);

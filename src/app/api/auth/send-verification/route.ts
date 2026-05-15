@@ -54,16 +54,19 @@ export async function POST(request: NextRequest) {
       data: { emailVerificationToken: token },
     });
 
-    // Send verification email (don't block if it fails)
-    const result = await sendVerificationEmail(user.email, token, 'da', ctx.activeCompanyId ?? undefined);
-
-    if (!result.success) {
-      logger.warn(`Verification email failed to send for user ${user.id}, logId=${result.logId}`);
-    }
+    // Send verification email — fire-and-forget so SMTP latency doesn't block the response
+    sendVerificationEmail(user.email, token, 'da', ctx.activeCompanyId ?? undefined)
+      .then((result) => {
+        if (!result.success) {
+          logger.warn(`Verification email failed to send for user ${user.id}, logId=${result.logId}`);
+        }
+      })
+      .catch((emailError) => {
+        logger.warn('Failed to send verification email:', emailError);
+      });
 
     return NextResponse.json({
       message: 'Verification email sent',
-      logId: result.logId,
     });
   } catch (error) {
     logger.error('Send verification error:', error);

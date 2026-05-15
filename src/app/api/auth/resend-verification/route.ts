@@ -71,16 +71,21 @@ export async function POST(request: NextRequest) {
       select: { companyId: true },
     });
 
-    const result = await sendVerificationEmail(
+    // Send verification email — fire-and-forget so SMTP latency doesn't block the response
+    sendVerificationEmail(
       user.email,
       token,
       'da',
       userCompany?.companyId ?? undefined
-    );
-
-    if (!result.success) {
-      logger.warn(`Verification email failed to resend for ${user.email}, logId=${result.logId}`);
-    }
+    )
+      .then((result) => {
+        if (!result.success) {
+          logger.warn(`Verification email failed to resend for ${user.email}, logId=${result.logId}`);
+        }
+      })
+      .catch((emailError) => {
+        logger.warn('Failed to resend verification email:', emailError);
+      });
 
     return NextResponse.json({ success: true });
   } catch (error) {
