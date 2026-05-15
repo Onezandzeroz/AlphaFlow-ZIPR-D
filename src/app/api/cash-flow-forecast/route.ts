@@ -99,8 +99,8 @@ export async function GET(request: NextRequest) {
         const info = accountInfo.get(line.accountId);
         if (!info) continue;
 
-        const dr = line.debit || 0;
-        const cr = line.credit || 0;
+        const dr = Number(line.debit || 0);
+        const cr = Number(line.credit || 0);
 
         if (revenueGroups.includes(info.group)) {
           monthData.revenue += cr - dr;

@@ -94,19 +94,19 @@ export async function GET(
     const lines: OIOUBLInvoiceData['lines'] = lineItems.map((item, index) => ({
       id: String(index + 1),
       description: item.description || 'Untitled line item',
-      quantity: item.quantity || 1,
+      quantity: Number(item.quantity) || 1,
       unitCode: 'EA', // Each — could be expanded with a unitCode field on line items
-      unitPrice: item.unitPrice || 0,
-      vatPercent: item.vatPercent || 0,
-      vatCategoryCode: getVATCategoryCode(item.vatPercent || 0),
+      unitPrice: Number(item.unitPrice) || 0,
+      vatPercent: Number(item.vatPercent) || 0,
+      vatCategoryCode: getVATCategoryCode(Number(item.vatPercent) || 0),
     }));
 
     // ── Build totals ─────────────────────────────────────────────────
     const currencyCode = invoice.currency || 'DKK';
-    const taxExclusiveAmount = invoice.subtotal || 0;
-    const taxTotal = invoice.vatTotal || 0;
-    const taxInclusiveAmount = invoice.total || 0;
-    const payableAmount = invoice.total || 0;
+    const taxExclusiveAmount = Number(invoice.subtotal) || 0;
+    const taxTotal = Number(invoice.vatTotal) || 0;
+    const taxInclusiveAmount = Number(invoice.total) || 0;
+    const payableAmount = Number(invoice.total) || 0;
 
     // ── Build OIOUBL data ────────────────────────────────────────────
     const invoiceData: OIOUBLInvoiceData = {

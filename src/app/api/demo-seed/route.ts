@@ -1549,7 +1549,7 @@ async function seedDemoData(userId: string): Promise<Record<string, number>> {
       where: { name: 'AlphaAi' },
       select: { dashboardWidgets: true },
     });
-    const inheritedWidgets = appOwnerCompany?.dashboardWidgets ?? null;
+    const inheritedWidgets = appOwnerCompany?.dashboardWidgets as Record<string, unknown> | undefined;
 
     demoCompany = await db.company.create({
       data: {
@@ -1572,7 +1572,7 @@ async function seedDemoData(userId: string): Promise<Record<string, number>> {
         nextInvoiceSequence: currentYearInvoiceCount + 1,
         currentYear: CURRENT_YEAR,
         isDemo: true,
-        dashboardWidgets: inheritedWidgets,
+        ...(inheritedWidgets && { dashboardWidgets: inheritedWidgets }),
       },
     });
     await db.userCompany.create({
@@ -1587,7 +1587,7 @@ async function seedDemoData(userId: string): Promise<Record<string, number>> {
   const companyInfoCount = demoCompany ? 1 : 0;
 
   // 2. Seed chart of accounts for demo (idempotent — skips if already exists)
-  const accountsSeeded = await seedChartOfAccounts(userId, companyId, true);
+  const accountsSeeded = await seedChartOfAccounts(userId, companyId);
 
   // 3. Create contacts
   const contacts = await db.contact.createMany({
@@ -1631,8 +1631,8 @@ async function seedDemoData(userId: string): Promise<Record<string, number>> {
   // 6. Create invoices (recent ~8 months with realistic overdue)
   let invoicesCount = 0;
   for (const inv of dynamicInvoices) {
-    const subtotal = inv.lineItems.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
-    const vatTotal = inv.lineItems.reduce((sum, item) => sum + (item.quantity * item.unitPrice * item.vatPercent) / 100, 0);
+    const subtotal = inv.lineItems.reduce((sum, item) => sum + Number(item.quantity) * Number(item.unitPrice), 0);
+    const vatTotal = inv.lineItems.reduce((sum, item) => sum + (Number(item.quantity) * Number(item.unitPrice) * Number(item.vatPercent)) / 100, 0);
     const total = subtotal + vatTotal;
     const contact = createdContacts[inv.contactIndex];
 
@@ -1707,6 +1707,7 @@ async function seedDemoData(userId: string): Promise<Record<string, number>> {
             const accountId = accountMap.get(l.accountNumber)!;
             return {
               accountId,
+              companyId,
               debit: l.debit,
               credit: l.credit,
               description: l.description,

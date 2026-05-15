@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
       let totalActual = 0;
 
       for (const month of MONTHS) {
-        const b = r(entry[month] || 0);
+        const b = r(Number(entry[month] || 0));
         const a = r(actuals[month] || 0);
         const v = r(a - b);
 
@@ -577,19 +577,19 @@ async function computeActualsForAccounts(
     let actual = 0;
     if (accountType === AccountType.REVENUE) {
       // Revenue: credit - debit (credit increases revenue)
-      actual = (line.credit || 0) - (line.debit || 0);
+      actual = Number(line.credit || 0) - Number(line.debit || 0);
     } else if (accountType === AccountType.EXPENSE) {
       // Expense: debit - credit (debit increases expense)
-      actual = (line.debit || 0) - (line.credit || 0);
+      actual = Number(line.debit || 0) - Number(line.credit || 0);
     } else if (accountType === AccountType.ASSET) {
       // Asset: debit - credit (debit increases assets)
-      actual = (line.debit || 0) - (line.credit || 0);
+      actual = Number(line.debit || 0) - Number(line.credit || 0);
     } else if (accountType === AccountType.LIABILITY) {
       // Liability: credit - debit (credit increases liabilities)
-      actual = (line.credit || 0) - (line.debit || 0);
+      actual = Number(line.credit || 0) - Number(line.debit || 0);
     } else if (accountType === AccountType.EQUITY) {
       // Equity: credit - debit (credit increases equity)
-      actual = (line.credit || 0) - (line.debit || 0);
+      actual = Number(line.credit || 0) - Number(line.debit || 0);
     }
 
     current[monthKey] = r((current[monthKey] || 0) + actual);

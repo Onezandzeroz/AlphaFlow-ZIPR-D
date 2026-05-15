@@ -107,8 +107,8 @@ export async function GET(request: NextRequest) {
 
     for (const entry of entries) {
       for (const line of entry.lines) {
-        const dr = line.debit || 0;
-        const cr = line.credit || 0;
+        const dr = Number(line.debit) || 0;
+        const cr = Number(line.credit) || 0;
 
         // Always add to end balances
         const endBal = endBalances.get(line.accountId);
@@ -191,8 +191,8 @@ export async function GET(request: NextRequest) {
         const info = accountInfo.get(line.accountId);
         if (!info) continue;
 
-        const dr = line.debit || 0;
-        const cr = line.credit || 0;
+        const dr = Number(line.debit) || 0;
+        const cr = Number(line.credit) || 0;
 
         if (pnlRevenueGroups.includes(info.group)) {
           totalRevenue += cr - dr;

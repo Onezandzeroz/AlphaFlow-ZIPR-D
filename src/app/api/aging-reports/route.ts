@@ -310,8 +310,8 @@ async function generateReceivablesAging(
     .filter((l) => l.journalEntry.status === 'POSTED' && !l.journalEntry.cancelled)
     .map((l) => ({
       date: new Date(l.journalEntry.date),
-      debit: l.debit || 0,
-      credit: l.credit || 0,
+      debit: Number(l.debit) || 0,
+      credit: Number(l.credit) || 0,
       description: l.journalEntry.description || '',
       reference: l.journalEntry.reference || '',
       journalEntryId: l.journalEntryId,
@@ -414,8 +414,8 @@ async function generatePayablesAging(
     .filter((l) => l.journalEntry.status === 'POSTED' && !l.journalEntry.cancelled)
     .map((l) => ({
       date: new Date(l.journalEntry.date),
-      debit: l.debit || 0,
-      credit: l.credit || 0,
+      debit: Number(l.debit) || 0,
+      credit: Number(l.credit) || 0,
       description: l.journalEntry.description || '',
       reference: l.journalEntry.reference || '',
       journalEntryId: l.journalEntryId,

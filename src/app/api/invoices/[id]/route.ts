@@ -94,8 +94,8 @@ async function createAccrualJournalEntry(
 
   for (const item of lineItems) {
     if (!item.description.trim() || item.unitPrice <= 0) continue;
-    const netAmount = item.quantity * item.unitPrice;
-    const vatAmount = (netAmount * item.vatPercent) / 100;
+    const netAmount = Number(item.quantity) * Number(item.unitPrice);
+    const vatAmount = (netAmount * Number(item.vatPercent)) / 100;
     const grossAmount = netAmount + vatAmount;
 
     // Credit the revenue account specified on the line item (default to 4100 if missing)
@@ -206,7 +206,7 @@ async function createAccrualJournalEntry(
 //
 async function createCashReceiptJournalEntry(
   ctx: { id: string; activeCompanyId: string | null; isOversightMode: boolean; demoModeEnabled: boolean; isDemoCompany: boolean },
-  existing: { id: string; invoiceNumber: string; customerName: string; issueDate: Date; total: number },
+  existing: { id: string; invoiceNumber: string; customerName: string; issueDate: Date; total: number | { toNumber(): number } },
   paymentDate?: Date,
 ): Promise<boolean> {
   // Look up Bank account (1100) and Receivables account (1200)
@@ -226,7 +226,7 @@ async function createCashReceiptJournalEntry(
     return false;
   }
 
-  const grossAmount = existing.total;
+  const grossAmount = typeof existing.total === 'number' ? existing.total : existing.total.toNumber();
   if (grossAmount <= 0) return false;
 
   const jeLines = [

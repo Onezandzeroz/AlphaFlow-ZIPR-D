@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
           where: { name: 'AlphaAi' },
           select: { dashboardWidgets: true },
         });
-        const inheritedWidgets = appOwnerCompany?.dashboardWidgets ?? null;
+        const inheritedWidgets = appOwnerCompany?.dashboardWidgets as Record<string, unknown> | undefined;
 
         // Create the shared demo company
         demoCompany = await db.company.create({
@@ -160,7 +160,7 @@ export async function POST(request: NextRequest) {
             bankCountry: 'Danmark',
             isDemo: true,
             isActive: true,
-            dashboardWidgets: inheritedWidgets,
+            ...(inheritedWidgets && { dashboardWidgets: inheritedWidgets }),
           },
         });
 

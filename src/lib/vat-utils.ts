@@ -100,8 +100,8 @@ export async function computeVATRegister(
 
       const code = line.vatCode || 'NONE';
       const existing = vatCodeMap.get(code) || { debitTotal: 0, creditTotal: 0 };
-      existing.debitTotal += line.debit || 0;
-      existing.creditTotal += line.credit || 0;
+      existing.debitTotal += Number(line.debit) || 0;
+      existing.creditTotal += Number(line.credit) || 0;
       vatCodeMap.set(code, existing);
     }
   }
@@ -163,9 +163,9 @@ export async function computeVATRegister(
       if (!accountGroup) continue;
 
       if (REVENUE_GROUPS.includes(accountGroup)) {
-        totalRevenue += (line.credit || 0) - (line.debit || 0);
+        totalRevenue += (Number(line.credit) || 0) - (Number(line.debit) || 0);
       } else if (EXPENSE_GROUPS.includes(accountGroup)) {
-        totalExpenses += (line.debit || 0) - (line.credit || 0);
+        totalExpenses += (Number(line.debit) || 0) - (Number(line.credit) || 0);
       }
     }
   }
@@ -205,9 +205,9 @@ export async function enrichTransactionsWithVAT(
   transactions: Array<{
     id: string;
     type: string;
-    amount: number;
+    amount: number | { toNumber(): number };
     description: string;
-    vatPercent: number;
+    vatPercent: number | { toNumber(): number };
     date: string | Date;
   }>,
   companyId: string,
@@ -252,8 +252,8 @@ export async function enrichTransactionsWithVAT(
 
       if ((group === 'OUTPUT_VAT' || group === 'INPUT_VAT') && code) {
         const net = group === 'OUTPUT_VAT'
-          ? (line.credit || 0) - (line.debit || 0)
-          : (line.debit || 0) - (line.credit || 0);
+          ? (Number(line.credit) || 0) - (Number(line.debit) || 0)
+          : (Number(line.debit) || 0) - (Number(line.credit) || 0);
 
         if (Math.abs(net) > 0.005) {
           vatAmount = Math.round(net * 100) / 100;
@@ -332,8 +332,8 @@ export async function enrichInvoicesWithVAT(
 
       if ((group === 'OUTPUT_VAT' || group === 'INPUT_VAT') && code) {
         const net = group === 'OUTPUT_VAT'
-          ? (line.credit || 0) - (line.debit || 0)
-          : (line.debit || 0) - (line.credit || 0);
+          ? (Number(line.credit) || 0) - (Number(line.debit) || 0)
+          : (Number(line.debit) || 0) - (Number(line.credit) || 0);
 
         if (Math.abs(net) > 0.005) {
           totalVatAmount += Math.round(net * 100) / 100;

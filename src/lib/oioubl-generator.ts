@@ -95,8 +95,8 @@ function generateTaxSubtotals(data: OIOUBLInvoiceData): Record<string, unknown>[
   const vatGroups = new Map<string, { taxable: number; tax: number; percent: number; code: string }>();
   for (const line of data.lines) {
     const key = `${line.vatPercent}-${line.vatCategoryCode}`;
-    const lineAmount = line.quantity * line.unitPrice;
-    const vatAmount = lineAmount * line.vatPercent / 100;
+    const lineAmount = Number(line.quantity) * Number(line.unitPrice);
+    const vatAmount = lineAmount * Number(line.vatPercent) / 100;
     const group = vatGroups.get(key) || { taxable: 0, tax: 0, percent: line.vatPercent, code: line.vatCategoryCode };
     group.taxable += lineAmount;
     group.tax += vatAmount;
@@ -300,7 +300,7 @@ export function generateOIOUBL(data: OIOUBLInvoiceData): string {
         },
         'cbc:LineExtensionAmount': {
           '@currencyID': data.currencyCode,
-          '#': (line.quantity * line.unitPrice).toFixed(2),
+          '#': (Number(line.quantity) * Number(line.unitPrice)).toFixed(2),
         },
         'cac:Item': {
           'cbc:Description': line.description,

@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
       where: { name: 'AlphaAi' },
       select: { dashboardWidgets: true },
     });
-    const inheritedWidgets = appOwnerCompany?.dashboardWidgets ?? null;
+    const inheritedWidgets = appOwnerCompany?.dashboardWidgets as Record<string, unknown> | undefined;
 
     const company = await db.company.create({
       data: {
@@ -135,7 +135,7 @@ export async function POST(request: NextRequest) {
         invoiceTerms: invoiceTerms || undefined,
         companyType: companyType || null,
         invoiceNotesTemplate: invoiceNotesTemplate || null,
-        dashboardWidgets: inheritedWidgets,
+        ...(inheritedWidgets && { dashboardWidgets: inheritedWidgets }),
       },
     });
 

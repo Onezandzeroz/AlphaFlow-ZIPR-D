@@ -472,7 +472,7 @@ export async function generateInvoicePDF(invoice: InvoiceWithDetails): Promise<U
   // ── DKK equivalent if foreign currency ──
   if (invoice.exchangeRate && invoice.currency !== 'DKK') {
     y -= 22;
-    const dkkEquivalent = invoice.total * invoice.exchangeRate;
+    const dkkEquivalent = Number(invoice.total) * Number(invoice.exchangeRate);
     drawText(page, `Tilsvarende i DKK: ${formatNumberForPDF(dkkEquivalent)} kr. (kurs: ${invoice.exchangeRate.toFixed(4)})`, {
       x: MARGIN_LEFT,
       y,

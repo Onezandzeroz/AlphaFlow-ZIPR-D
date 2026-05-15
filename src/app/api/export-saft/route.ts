@@ -97,8 +97,8 @@ export async function GET(request: NextRequest) {
       for (const line of entry.lines) {
         const code = line.vatCode || 'NONE';
         const existing = vatCodeMap.get(code) || { debitTotal: 0, creditTotal: 0 };
-        existing.debitTotal += line.debit || 0;
-        existing.creditTotal += line.credit || 0;
+        existing.debitTotal += Number(line.debit) || 0;
+        existing.creditTotal += Number(line.credit) || 0;
         vatCodeMap.set(code, existing);
       }
     }
@@ -162,8 +162,8 @@ export async function GET(request: NextRequest) {
 
     for (const entry of journalEntries) {
       for (const line of entry.lines) {
-        totalDebit += line.debit || 0;
-        totalCredit += line.credit || 0;
+        totalDebit += Number(line.debit) || 0;
+        totalCredit += Number(line.credit) || 0;
       }
     }
 
@@ -320,8 +320,8 @@ export async function GET(request: NextRequest) {
           lineNode.ele('Description').txt(
             line.description || entry.description || '',
           );
-          lineNode.ele('DebitAmount').txt(formatNumber(line.debit || 0));
-          lineNode.ele('CreditAmount').txt(formatNumber(line.credit || 0));
+          lineNode.ele('DebitAmount').txt(formatNumber(Number(line.debit) || 0));
+          lineNode.ele('CreditAmount').txt(formatNumber(Number(line.credit) || 0));
 
           if (line.vatCode && line.vatCode !== 'NONE') {
             lineNode.ele('TaxPointDate').txt(formatDate(new Date(entry.date)));
@@ -375,10 +375,10 @@ export async function GET(request: NextRequest) {
             .ele('Description')
             .txt(line.description || entry.description || '');
 
-          const quantity = (line.debit || line.credit || 1);
+          const quantity = (Number(line.debit) || Number(line.credit) || 1);
           invLine.ele('Quantity').txt('1');
-          invLine.ele('UnitPrice').txt(formatNumber(line.credit || line.debit || 0));
-          invLine.ele('TaxBaseAmount').txt(formatNumber(line.credit || line.debit || 0));
+          invLine.ele('UnitPrice').txt(formatNumber(Number(line.credit) || Number(line.debit) || 0));
+          invLine.ele('TaxBaseAmount').txt(formatNumber(Number(line.credit) || Number(line.debit) || 0));
 
           // Find the VAT code from this line or a companion output VAT line
           const vatCode = line.vatCode || 'NONE';
@@ -391,16 +391,16 @@ export async function GET(request: NextRequest) {
 
             // VAT amount from the corresponding output VAT line
             const vatLine = entry.lines.find(
-              (l) => l.account?.group === 'OUTPUT_VAT' && l.credit > 0,
+              (l) => l.account?.group === 'OUTPUT_VAT' && Number(l.credit) > 0,
             );
             invTax
               .ele('TaxAmount')
-              .txt(formatNumber(vatLine?.credit || 0));
+              .txt(formatNumber(Number(vatLine?.credit) || 0));
           }
 
-          const lineTotal = (line.credit || line.debit || 0) + (entry.lines.find(
-            (l) => l.account?.group === 'OUTPUT_VAT' && l.credit > 0,
-          )?.credit || 0);
+          const lineTotal = (Number(line.credit) || Number(line.debit) || 0) + (Number(entry.lines.find(
+            (l) => l.account?.group === 'OUTPUT_VAT' && Number(l.credit) > 0,
+          )?.credit) || 0);
 
           const settlement = invoice.ele('Settlement');
           settlement.ele('SettlementAmount').txt(formatNumber(lineTotal));

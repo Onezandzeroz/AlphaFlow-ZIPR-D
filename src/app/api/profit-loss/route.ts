@@ -71,9 +71,9 @@ export async function GET(request: NextRequest) {
 
       let amount = 0;
       if (account.type === 'REVENUE') {
-        amount = (line.credit || 0) - (line.debit || 0); // Credit increases revenue
+        amount = (Number(line.credit) || 0) - (Number(line.debit) || 0); // Credit increases revenue
       } else if (account.type === 'EXPENSE') {
-        amount = (line.debit || 0) - (line.credit || 0); // Debit increases expense
+        amount = (Number(line.debit) || 0) - (Number(line.credit) || 0); // Debit increases expense
       }
 
       const groupName = account.group || account.type;

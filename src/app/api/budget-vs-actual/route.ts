@@ -107,15 +107,15 @@ export async function GET(request: NextRequest) {
       const accountType = accountTypeMap.get(line.accountId);
       let actual = 0;
       if (accountType === AccountType.REVENUE) {
-        actual = (line.credit || 0) - (line.debit || 0);
+        actual = Number(line.credit || 0) - Number(line.debit || 0);
       } else if (accountType === AccountType.EXPENSE) {
-        actual = (line.debit || 0) - (line.credit || 0);
+        actual = Number(line.debit || 0) - Number(line.credit || 0);
       } else if (accountType === AccountType.ASSET) {
-        actual = (line.debit || 0) - (line.credit || 0);
+        actual = Number(line.debit || 0) - Number(line.credit || 0);
       } else if (accountType === AccountType.LIABILITY) {
-        actual = (line.credit || 0) - (line.debit || 0);
+        actual = Number(line.credit || 0) - Number(line.debit || 0);
       } else if (accountType === AccountType.EQUITY) {
-        actual = (line.credit || 0) - (line.debit || 0);
+        actual = Number(line.credit || 0) - Number(line.debit || 0);
       }
       actualsByAccount.set(
         line.accountId,
@@ -128,7 +128,7 @@ export async function GET(request: NextRequest) {
       // Sum all months for the total budget amount
       let budgetAmount = 0;
       for (const monthField of MONTH_FIELDS) {
-        budgetAmount += (entry[monthField] as number) || 0;
+        budgetAmount += Number(entry[monthField]) || 0;
       }
       budgetAmount = r(budgetAmount);
 

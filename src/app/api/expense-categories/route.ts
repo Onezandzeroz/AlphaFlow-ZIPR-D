@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
       if (!account) continue;
 
       // For expense accounts, debit increases the balance
-      const amount = (line.debit || 0) - (line.credit || 0);
+      const amount = (Number(line.debit) || 0) - (Number(line.credit) || 0);
       if (amount <= 0) continue;
 
       totalExpenses += amount;
@@ -139,7 +139,7 @@ export async function GET(request: NextRequest) {
       const account = accountMap.get(line.accountId);
       if (!account) continue;
 
-      const amount = (line.debit || 0) - (line.credit || 0);
+      const amount = (Number(line.debit) || 0) - (Number(line.credit) || 0);
       if (amount <= 0) continue;
 
       const month = line.journalEntry.date.toISOString().substring(0, 7);

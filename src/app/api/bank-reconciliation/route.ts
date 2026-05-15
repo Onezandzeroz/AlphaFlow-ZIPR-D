@@ -334,8 +334,8 @@ export async function POST(request: NextRequest) {
 
     const startDate = new Date(sortedLines[0].date);
     const endDate = new Date(sortedLines[sortedLines.length - 1].date);
-    const openingBalance = sortedLines[0].balance - sortedLines[0].amount;
-    const closingBalance = sortedLines[sortedLines.length - 1].balance;
+    const openingBalance = Number(sortedLines[0].balance) - Number(sortedLines[0].amount);
+    const closingBalance = Number(sortedLines[sortedLines.length - 1].balance);
 
     // Fetch journal entry lines for the bank account for auto-matching
     // Find the bank account by account group BANK or by account number matching the bankAccount identifier
@@ -399,8 +399,8 @@ export async function POST(request: NextRequest) {
             date: new Date(line.date),
             description: line.description,
             reference: line.reference || null,
-            amount: Math.round(line.amount * 100) / 100,
-            balance: Math.round(line.balance * 100) / 100,
+            amount: Math.round(Number(line.amount) * 100) / 100,
+            balance: Math.round(Number(line.balance) * 100) / 100,
             reconciliationStatus: 'UNMATCHED',
           })),
         },

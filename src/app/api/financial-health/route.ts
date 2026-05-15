@@ -92,8 +92,8 @@ export async function GET(request: NextRequest) {
       for (const line of entry.lines) {
         const bal = balances.get(line.accountId);
         if (bal) {
-          bal.debit += line.debit || 0;
-          bal.credit += line.credit || 0;
+          bal.debit += Number(line.debit) || 0;
+          bal.credit += Number(line.credit) || 0;
         }
       }
     }
@@ -166,8 +166,8 @@ export async function GET(request: NextRequest) {
       for (const line of entry.lines) {
         const info = accountInfo.get(line.accountId);
         if (!info) continue;
-        const dr = line.debit || 0;
-        const cr = line.credit || 0;
+        const dr = Number(line.debit) || 0;
+        const cr = Number(line.credit) || 0;
         if (revenueGroups.includes(info.group)) {
           periodRevenue += cr - dr;
         } else if (expenseGroups.includes(info.group)) {
@@ -200,8 +200,8 @@ export async function GET(request: NextRequest) {
         for (const line of entry.lines) {
           const info = accountInfo.get(line.accountId);
           if (!info) continue;
-          const dr = line.debit || 0;
-          const cr = line.credit || 0;
+          const dr = Number(line.debit) || 0;
+          const cr = Number(line.credit) || 0;
 
           if (revenueGroups.includes(info.group)) {
             revenue += cr - dr;

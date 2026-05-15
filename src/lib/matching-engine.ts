@@ -88,7 +88,7 @@ function ruleBasedMatch(
   let confidence = 0;
 
   // Amount check: exact ±0.01 DKK
-  const amountDiff = Math.abs(bankLine.amount - journalLine.amount);
+  const amountDiff = Math.abs(Number(bankLine.amount) - Number(journalLine.amount));
   if (amountDiff <= 0.01) {
     confidence += 0.50;
     reasons.push(`Beløb matcher præcist: ${bankLine.amount.toFixed(2)} DKK`);
@@ -158,11 +158,11 @@ function fuzzyMatch(
   let confidence = 0;
 
   // Amount check: within ±5 DKK
-  const amountDiff = Math.abs(bankLine.amount - journalLine.amount);
+  const amountDiff = Math.abs(Number(bankLine.amount) - Number(journalLine.amount));
   if (amountDiff <= 5.0) {
     confidence += 0.30;
     reasons.push(`Beløb tæt på: ${amountDiff.toFixed(2)} DKK forskel`);
-  } else if (amountDiff <= Math.abs(bankLine.amount) * 0.05) {
+  } else if (amountDiff <= Math.abs(Number(bankLine.amount)) * 0.05) {
     // Within 5% of the amount
     confidence += 0.20;
     reasons.push(`Beløb inden for 5%: ${amountDiff.toFixed(2)} DKK forskel`);
@@ -348,7 +348,7 @@ export function batchMatch(
 
   // Sort bank lines by amount (exact amounts first for better matching)
   const sortedLines = [...bankLines].sort((a, b) =>
-    Math.abs(b.amount) - Math.abs(a.amount)
+    Math.abs(Number(b.amount)) - Math.abs(Number(a.amount))
   );
 
   for (const bankLine of sortedLines) {
@@ -389,9 +389,9 @@ export async function aiBatchMatch(
     for (const bankLine of batch) {
       // Get fuzzy candidates first (narrow down to likely matches)
       const fuzzyCandidates = journalLines.filter(jl => {
-        const amountDiff = Math.abs(bankLine.amount - jl.amount);
+        const amountDiff = Math.abs(Number(bankLine.amount) - Number(jl.amount));
         const daysDiff = daysBetween(bankLine.date, jl.date);
-        return amountDiff <= Math.abs(bankLine.amount) * 0.10 && daysDiff <= 14;
+        return amountDiff <= Math.abs(Number(bankLine.amount)) * 0.10 && daysDiff <= 14;
       });
 
       if (fuzzyCandidates.length === 0) continue;

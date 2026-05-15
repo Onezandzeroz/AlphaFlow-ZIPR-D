@@ -44,8 +44,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Calculate amounts
-    const vatPercent = transaction.vatPercent;
-    const taxExclusiveAmount = transaction.amount;
+    const vatPercent = Number(transaction.vatPercent);
+    const taxExclusiveAmount = Number(transaction.amount);
     const taxTotal = (taxExclusiveAmount * vatPercent) / 100;
     const taxInclusiveAmount = taxExclusiveAmount + taxTotal;
     const payableAmount = taxInclusiveAmount;

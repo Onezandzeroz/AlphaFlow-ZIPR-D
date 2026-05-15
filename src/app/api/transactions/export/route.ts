@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
 
     for (const tx of transactions) {
       allEntries.push({
-        date: tx.date, type: tx.type, amount: tx.amount,
+        date: tx.date, type: tx.type, amount: Number(tx.amount),
         description: tx.description, source: 'transaction',
         sourceId: tx.id,
       });
@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
 
         for (const item of lineItems) {
           if (!item.description?.trim() || item.unitPrice <= 0) continue;
-          const lineTotal = item.quantity * item.unitPrice;
+          const lineTotal = Number(item.quantity) * Number(item.unitPrice);
           allEntries.push({
             date: invoice.issueDate, type: 'SALE', amount: lineTotal,
             description: `${invoice.invoiceNumber} - ${item.description}`,
@@ -167,7 +167,7 @@ export async function GET(request: NextRequest) {
         e.amount.toFixed(2),
         lineRate.toFixed(1),
         lineVAT.toFixed(2),
-        (e.amount + lineVAT).toFixed(2),
+        (Number(e.amount) + lineVAT).toFixed(2),
         e.source,
       ];
     });

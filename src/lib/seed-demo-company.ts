@@ -1183,8 +1183,8 @@ export async function seedDemoCompany(demoCompanyId: string, systemUserId: strin
   const invoiceSeeds = buildInvoices()
   const invoiceIds: string[] = []
   for (const inv of invoiceSeeds) {
-    const subtotal = inv.lineItems.reduce((sum, li) => sum + r(li.quantity * li.unitPrice), 0)
-    const vatTotal = inv.lineItems.reduce((sum, li) => sum + r(li.quantity * li.unitPrice * li.vatPercent / 100), 0)
+    const subtotal = inv.lineItems.reduce((sum, li) => sum + r(Number(li.quantity) * Number(li.unitPrice)), 0)
+    const vatTotal = inv.lineItems.reduce((sum, li) => sum + r(Number(li.quantity) * Number(li.unitPrice) * Number(li.vatPercent) / 100), 0)
     const total = r(subtotal + vatTotal)
 
     const contact = CONTACT_DATA[inv.contactIndex]

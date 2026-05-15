@@ -111,10 +111,10 @@ export async function GET(request: NextRequest) {
       let change = 0;
       if (account.type === AccountType.ASSET || account.type === AccountType.EXPENSE) {
         // Debit increases balance
-        change = (line.debit || 0) - (line.credit || 0);
+        change = Number(line.debit || 0) - Number(line.credit || 0);
       } else {
         // Credit increases balance (Liability, Equity, Revenue)
-        change = (line.credit || 0) - (line.debit || 0);
+        change = Number(line.credit || 0) - Number(line.debit || 0);
       }
 
       monthlyChanges.set(key, r((monthlyChanges.get(key) || 0) + change));
@@ -136,9 +136,9 @@ export async function GET(request: NextRequest) {
 
     let runningBalance: number;
     if (account.type === AccountType.ASSET || account.type === AccountType.EXPENSE) {
-      runningBalance = r((balanceBeforeStart._sum.debit || 0) - (balanceBeforeStart._sum.credit || 0));
+      runningBalance = r(Number(balanceBeforeStart._sum.debit || 0) - Number(balanceBeforeStart._sum.credit || 0));
     } else {
-      runningBalance = r((balanceBeforeStart._sum.credit || 0) - (balanceBeforeStart._sum.debit || 0));
+      runningBalance = r(Number(balanceBeforeStart._sum.credit || 0) - Number(balanceBeforeStart._sum.debit || 0));
     }
 
     // ─── Build monthly balances (running balance) ─────────────────

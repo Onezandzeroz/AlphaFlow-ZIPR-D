@@ -282,8 +282,8 @@ async function performSync(connectionId: string, userId: string) {
     let matchedCount = 0;
     if (newTransactions.length > 0) {
       const sortedTx = [...newTransactions].sort((a, b) => a.date.localeCompare(b.date));
-      const openingBalance = sortedTx[0].balance - sortedTx[0].amount;
-      const closingBalance = sortedTx[sortedTx.length - 1].balance;
+      const openingBalance = Number(sortedTx[0].balance) - Number(sortedTx[0].amount);
+      const closingBalance = Number(sortedTx[sortedTx.length - 1].balance);
 
       
       const statement = await db.bankStatement.create({
@@ -291,7 +291,7 @@ async function performSync(connectionId: string, userId: string) {
           bankAccount: `${connection.registrationNumber || ''}${connection.accountNumber}`,
           startDate: new Date(sortedTx[0].date),
           endDate: new Date(sortedTx[sortedTx.length - 1].date),
-          openingBalance: Math.round(openingBalance * 100) / 100,
+          openingBalance: Math.round(Number(openingBalance) * 100) / 100,
           closingBalance: Math.round(closingBalance * 100) / 100,
           importSource: 'open_banking',
           importDate: new Date(),
@@ -304,8 +304,8 @@ async function performSync(connectionId: string, userId: string) {
               date: new Date(tx.date),
               description: tx.description,
               reference: tx.reference || null,
-              amount: Math.round(tx.amount * 100) / 100,
-              balance: Math.round(tx.balance * 100) / 100,
+              amount: Math.round(Number(tx.amount) * 100) / 100,
+              balance: Math.round(Number(tx.balance) * 100) / 100,
               reconciliationStatus: 'UNMATCHED',
             })),
           },

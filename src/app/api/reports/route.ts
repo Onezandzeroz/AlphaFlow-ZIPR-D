@@ -137,8 +137,8 @@ async function generateIncomeStatement(
     for (const line of entry.lines) {
       const group = line.account.group;
       const existing = groupMap.get(group) || { debit: 0, credit: 0, accounts: [] };
-      existing.debit += line.debit || 0;
-      existing.credit += line.credit || 0;
+      existing.debit += Number(line.debit) || 0;
+      existing.credit += Number(line.credit) || 0;
       groupMap.set(group, existing);
     }
   }
@@ -276,8 +276,8 @@ async function generateBalanceSheet(
     for (const line of entry.lines) {
       const existing = accountBalances.get(line.accountId);
       if (existing) {
-        existing.debit += line.debit || 0;
-        existing.credit += line.credit || 0;
+        existing.debit += Number(line.debit) || 0;
+        existing.credit += Number(line.credit) || 0;
       } else {
         // Account may have been deactivated but still has entries
         accountBalances.set(line.accountId, {
@@ -285,8 +285,8 @@ async function generateBalanceSheet(
           name: line.account.name,
           type: line.account.type,
           group: line.account.group,
-          debit: line.debit || 0,
-          credit: line.credit || 0,
+          debit: Number(line.debit) || 0,
+          credit: Number(line.credit) || 0,
         });
       }
     }

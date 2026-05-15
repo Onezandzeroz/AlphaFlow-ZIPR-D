@@ -70,11 +70,11 @@ export async function POST(request: NextRequest) {
     }
 
     const subtotal = lineItems.reduce((sum: number, item: { quantity: number; unitPrice: number }) => {
-      return sum + (item.quantity * item.unitPrice);
+      return sum + (Number(item.quantity) * Number(item.unitPrice));
     }, 0);
 
     const vatTotal = lineItems.reduce((sum: number, item: { quantity: number; unitPrice: number; vatPercent: number }) => {
-      return sum + ((item.quantity * item.unitPrice * item.vatPercent) / 100);
+      return sum + ((Number(item.quantity) * Number(item.unitPrice) * Number(item.vatPercent)) / 100);
     }, 0);
 
     const total = subtotal + vatTotal;

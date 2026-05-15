@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getAuthContext } from '@/lib/session';
 import { auditCreate, auditUpdate, auditCancel, requestMetadata } from '@/lib/audit';
-import { RecurringFrequency, RecurringStatus } from '@prisma/client';
+import { RecurringFrequency, RecurringStatus, Prisma } from '@prisma/client';
 import { logger } from '@/lib/logger';
 import { requirePermission, tenantFilter, companyScope, Permission, blockOversightMutation, requireNotDemoCompany } from '@/lib/rbac';
 import { requireTokenPayAccess } from '@/lib/tokenpay';
@@ -326,7 +326,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Build update data — only allowed fields
-    const updateData: Record<string, unknown> = {};
+    const updateData: Prisma.RecurringEntryUpdateInput = {};
     if (name !== undefined) updateData.name = name;
     if (description !== undefined) updateData.description = description;
     if (frequency !== undefined) updateData.frequency = frequency;
@@ -353,7 +353,7 @@ export async function PUT(request: NextRequest) {
       const newEndDate = endDate !== undefined ? (endDate ? new Date(endDate) : null) : existing.endDate;
 
       if (newEndDate && recalculatedNext > newEndDate) {
-        updateData.status = 'COMPLETED';
+        updateData.status = 'COMPLETED' as RecurringStatus;
       }
 
       updateData.nextExecution = recalculatedNext;

@@ -88,8 +88,8 @@ export async function GET(request: NextRequest) {
       for (const line of entry.lines) {
         const existing = accountMap.get(line.accountId);
         if (existing) {
-          existing.debitTotal += line.debit;
-          existing.creditTotal += line.credit;
+          existing.debitTotal += Number(line.debit);
+          existing.creditTotal += Number(line.credit);
         } else {
           // Account might have been deactivated but still has entries
           accountMap.set(line.accountId, {
@@ -97,8 +97,8 @@ export async function GET(request: NextRequest) {
             accountNumber: line.account.number,
             accountName: line.account.name,
             accountType: line.account.type,
-            debitTotal: line.debit,
-            creditTotal: line.credit,
+            debitTotal: Number(line.debit),
+            creditTotal: Number(line.credit),
           });
         }
       }
