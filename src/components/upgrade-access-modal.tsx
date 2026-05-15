@@ -110,13 +110,13 @@ export function UpgradeAccessModal() {
           {/* Image + Title */}
           <div className="relative flex items-center gap-4">
             {/* .tbkey image */}
-            <div className="flex-shrink-0 h-[136px] w-[136px] rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/20 shadow-lg overflow-hidden">
+            <div className="flex-shrink-0 h-[136px] w-[136px] flex items-center justify-center">
               {isExpired ? (
                 <div className="relative">
                   <img
                     src="/tbkey.png"
                     alt=".tbkey"
-                    className="h-24 w-24 object-contain opacity-60"
+                    className="h-[136px] w-[136px] object-contain opacity-60"
                     draggable={false}
                   />
                   <Clock className="absolute -top-2 -right-2 h-5 w-5 text-white bg-amber-600 rounded-full p-0.5" />
@@ -125,7 +125,7 @@ export function UpgradeAccessModal() {
                 <img
                   src="/tbkey.png"
                   alt=".tbkey"
-                  className="h-24 w-24 object-contain drop-shadow-sm"
+                  className="h-[136px] w-[136px] object-contain drop-shadow-sm"
                   draggable={false}
                 />
               )}
