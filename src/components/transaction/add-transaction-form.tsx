@@ -98,11 +98,7 @@ function defaultYesterday(): string {
 export function AddTransactionForm({ onSuccess, preloadedReceiptFile, onPreloadedFileConsumed, onScannerActiveChange }: AddTransactionFormProps) {
   const { t, language } = useTranslation();
   const isDa = language === 'da';
-  const goToSettings = () => { window.location.hash = '#settings'; };
-  const { handleMutationError, accessBanner } = useAccessErrorHandler({
-    onGoToSettings: goToSettings,
-    onPurchaseToken: goToSettings,
-  });
+  const { handleMutationError } = useAccessErrorHandler();
 
   // ─── State ───
   const [isLoading, setIsLoading] = useState(false);
@@ -428,7 +424,6 @@ export function AddTransactionForm({ onSuccess, preloadedReceiptFile, onPreloade
   // ─── RENDER ───
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      {accessBanner}
       {error && (
         <div className="p-3 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 rounded-lg flex items-center gap-2">
           <Info className="h-4 w-4 shrink-0" />

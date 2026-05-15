@@ -207,11 +207,7 @@ interface ContactsPageProps {
 export function ContactsPage({ user, autoOpenCreate, onAutoCreateConsumed }: ContactsPageProps) {
   const { language } = useTranslation();
   const isDanish = language === 'da';
-  const goToSettings = () => { window.location.hash = '#settings'; };
-  const { handleMutationError, accessBanner } = useAccessErrorHandler({
-    onGoToSettings: goToSettings,
-    onPurchaseToken: goToSettings,
-  });
+  const { handleMutationError } = useAccessErrorHandler();
 
   // Data state
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -976,8 +972,7 @@ export function ContactsPage({ user, autoOpenCreate, onAutoCreateConsumed }: Con
           </DialogHeader>
 
           <div className="space-y-4 pt-2">
-            {/* Access denied banner */}
-            {accessBanner}
+
             {/* Error message */}
             {formError && (
               <div className="text-sm text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/50 rounded-lg px-3 py-2">

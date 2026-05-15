@@ -116,11 +116,7 @@ function formatDanishBank(reg: string, account: string): string {
 export function CompanySettingsPage({ user, onNavigate }: CompanySettingsPageProps) {
   const { t, language } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const goToSettings = () => { window.location.hash = '#settings'; };
-  const { handleMutationError, accessBanner } = useAccessErrorHandler({
-    onGoToSettings: goToSettings,
-    onPurchaseToken: goToSettings,
-  });
+  const { handleMutationError } = useAccessErrorHandler();
 
   // ── State ──
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null);
@@ -440,8 +436,7 @@ export function CompanySettingsPage({ user, onNavigate }: CompanySettingsPagePro
 
   return (
     <div className="space-y-4 lg:space-y-6">
-      {/* Access denied banner */}
-      {accessBanner}
+
       {/* ── Status Indicators ── */}
       <Card className="stat-card">
         <CardContent className="p-3 sm:p-4">

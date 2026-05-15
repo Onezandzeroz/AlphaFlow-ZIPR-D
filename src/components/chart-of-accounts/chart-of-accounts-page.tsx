@@ -293,11 +293,7 @@ const EMPTY_FORM: AccountFormData = {
 export function ChartOfAccountsPage({ user, onNavigate }: ChartOfAccountsPageProps) {
   const { language } = useTranslation();
   const isDanish = language === 'da';
-  const goToSettings = () => { window.location.hash = '#settings'; };
-  const { handleMutationError, accessBanner } = useAccessErrorHandler({
-    onGoToSettings: goToSettings,
-    onPurchaseToken: goToSettings,
-  });
+  const { handleMutationError } = useAccessErrorHandler();
 
   // ─── State ──────────────────────────────────────────────────────────────
 
@@ -669,8 +665,7 @@ export function ChartOfAccountsPage({ user, onNavigate }: ChartOfAccountsPagePro
 
   return (
     <div className="p-3 lg:p-6 space-y-4 lg:space-y-6">
-      {/* Access denied banner */}
-      {accessBanner}
+
       {/* Header */}
       <PageHeader
         title={isDanish ? 'Kontoplan' : 'Chart of Accounts'}

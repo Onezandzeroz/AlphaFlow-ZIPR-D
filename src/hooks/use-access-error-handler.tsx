@@ -1,37 +1,23 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import { useTranslation } from '@/lib/use-translation';
 import { parseApiError, isAccessDenied } from '@/lib/api-error-handler';
 import { toast } from 'sonner';
-import { AccessDeniedBanner } from '@/components/access-denied-banner';
-
-export interface AccessErrorState {
-  variant: 'denied' | 'expired';
-  action?: string;
-}
-
-interface UseAccessErrorHandlerOptions {
-  /** Called when user clicks "Go to Access Settings" */
-  onGoToSettings?: () => void;
-  /** Called when user clicks "Purchase Access Token" */
-  onPurchaseToken?: () => void;
-}
+import { useUpgradeModalStore } from '@/lib/upgrade-modal-store';
 
 /**
  * React hook for handling API errors with bilingual access-denied support.
  *
  * When a mutation (POST/PUT/DELETE) fails:
- * - If the error is ACCESS_DENIED / ACCESS_EXPIRED → shows a centered modal popup
- *   with bilingual message, brief explanation, and CTAs to buy tokens or go to settings.
+ * - If the error is ACCESS_DENIED / ACCESS_EXPIRED → shows the global
+ *   UpgradeAccessModal (via Zustand store) which is mounted once in AppLayout.
+ *   This guarantees the same placement, layout and design every time.
  * - For all other errors → shows a translated toast message.
  *
  * @example
  * ```tsx
- * const { handleMutationError, accessBanner } = useAccessErrorHandler({
- *   onGoToSettings: () => onViewChange('settings'),
- *   onPurchaseToken: () => onViewChange('settings'),
- * });
+ * const { handleMutationError } = useAccessErrorHandler();
  *
  * // In your mutation handler:
  * const response = await fetch('/api/contacts', { method: 'POST', ... });
@@ -40,19 +26,17 @@ interface UseAccessErrorHandlerOptions {
  *   return;
  * }
  * ```
- *
- * Then render `{accessBanner}` anywhere in your component (it uses fixed/portal positioning).
  */
-export function useAccessErrorHandler(options: UseAccessErrorHandlerOptions = {}) {
+export function useAccessErrorHandler() {
   const { language } = useTranslation();
-  const [accessError, setAccessError] = useState<AccessErrorState | null>(null);
+  const showUpgradeModal = useUpgradeModalStore((s) => s.show);
 
   /**
    * Process a failed fetch response.
    *
    * @param response - The fetch Response that failed (response.ok === false)
-   * @param action - Optional human-readable description of the action (e.g. "Opret kontakt" / "Create contact")
-   * @returns true if the error was an access denial (popup shown), false otherwise (toast shown)
+   * @param action - Optional human-readable description of the action
+   * @returns true if the error was an access denial (modal shown), false otherwise (toast shown)
    */
   const handleMutationError = useCallback(
     async (
@@ -69,10 +53,10 @@ export function useAccessErrorHandler(options: UseAccessErrorHandlerOptions = {}
       // Check if this is a TokenPay access denial
       if (isAccessDenied(body)) {
         const code = body.code as string;
-        const variant: AccessErrorState['variant'] =
-          code === 'ACCESS_EXPIRED' ? 'expired' : 'denied';
-
-        setAccessError({ variant, action });
+        showUpgradeModal({
+          variant: code === 'ACCESS_EXPIRED' ? 'expired' : 'denied',
+          action,
+        });
         return true; // signal: access denied
       }
 
@@ -84,32 +68,10 @@ export function useAccessErrorHandler(options: UseAccessErrorHandlerOptions = {}
 
       return false;
     },
-    [language]
+    [language, showUpgradeModal]
   );
-
-  const dismissAccessError = useCallback(() => setAccessError(null), []);
-
-  // Render the modal popup when there's an active access error
-  const accessBanner = accessError ? (
-    <AccessDeniedBanner
-      variant={accessError.variant}
-      action={accessError.action}
-      onGoToSettings={() => {
-        dismissAccessError();
-        options.onGoToSettings?.();
-      }}
-      onPurchaseToken={() => {
-        dismissAccessError();
-        options.onPurchaseToken?.();
-      }}
-      onDismiss={dismissAccessError}
-    />
-  ) : null;
 
   return {
     handleMutationError,
-    accessBanner,
-    accessError,
-    dismissAccessError,
   };
 }

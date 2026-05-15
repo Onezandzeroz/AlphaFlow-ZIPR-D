@@ -1689,6 +1689,64 @@ export const translations = {
     en: 'You can view all data, but cannot make changes. Purchase an access token to unlock.',
   },
 
+  // ========== UPGRADE ACCESS MODAL ==========
+  upgradeDeniedTitle: {
+    da: 'Skriveadgang påkrævet',
+    en: 'Write Access Required',
+  },
+  upgradeExpiredTitle: {
+    da: 'Adgang udløbet',
+    en: 'Access Expired',
+  },
+  upgradeDeniedDescription: {
+    da: 'For at oprette, redigere eller slette data skal du have et aktivt adgangstoken (.tbkey). Upload dit proof for at aktivere skrivetilladelse.',
+    en: 'To create, edit, or delete data you need an active access token (.tbkey). Upload your proof to activate write access.',
+  },
+  upgradeExpiredDescription: {
+    da: 'Dit adgangstoken er udløbet. Upload et nyt .tbkey proof for at genaktivere skrivetilladelse og fortsætte dit arbejde.',
+    en: 'Your access token has expired. Upload a new .tbkey proof to reactivate write access and continue your work.',
+  },
+  upgradeFeaturesTitle: {
+    da: 'Tilladelser',
+    en: 'Permissions',
+  },
+  upgradeFeatureView: {
+    da: 'Se og gennemgå al data',
+    en: 'View and review all data',
+  },
+  upgradeFeatureExport: {
+    da: 'Eksporter rapporter og filer',
+    en: 'Export reports and files',
+  },
+  upgradeFeatureCreate: {
+    da: 'Opret posteringer og fakturaer',
+    en: 'Create transactions and invoices',
+  },
+  upgradeFeatureEdit: {
+    da: 'Rediger eksisterende data',
+    en: 'Edit existing data',
+  },
+  upgradeFeatureDelete: {
+    da: 'Slet poster og bilag',
+    en: 'Delete entries and documents',
+  },
+  upgradeAvailable: {
+    da: 'Tilgængelig',
+    en: 'Available',
+  },
+  upgradeLocked: {
+    da: 'Låst',
+    en: 'Locked',
+  },
+  upgradeUploadProof: {
+    da: 'Upload .tbkey Proof',
+    en: 'Upload .tbkey Proof',
+  },
+  upgradePurchaseToken: {
+    da: 'Køb adgangstoken',
+    en: 'Purchase Access Token',
+  },
+
   // ========== RBAC / PERMISSION ERRORS ==========
   authenticationRequired: {
     da: 'Log ind for at fortsætte',

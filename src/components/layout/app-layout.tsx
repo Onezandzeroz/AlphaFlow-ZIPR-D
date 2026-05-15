@@ -12,6 +12,7 @@ import { CommandPalette, useCommandPalette } from '@/components/command-palette'
 import { MobileFab } from '@/components/mobile-fab';
 import { MobileBottomNav } from '@/components/mobile-bottom-nav';
 import { KeyboardShortcutsModal } from '@/components/keyboard-shortcuts-modal';
+import { UpgradeAccessModal } from '@/components/upgrade-access-modal';
 import { NotificationCenter } from '@/components/notification-center';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -804,6 +805,9 @@ export function AppLayout({
         onOpenChange={setShortcutsOpen}
         onNavigate={(view) => onViewChange(view as View)}
       />
+
+      {/* Global Upgrade Access Modal — shown on any write attempt without .tbkey */}
+      <UpgradeAccessModal />
     </div>
   );
 }
