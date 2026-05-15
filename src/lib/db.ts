@@ -7,6 +7,10 @@
  * Includes a Prisma extension that automatically converts Decimal fields
  * to JavaScript numbers on every query, ensuring JSON serialization works
  * correctly in API responses.
+ *
+ * NOTE: Prisma's generated types still show Decimal fields as Prisma.Decimal.
+ * At runtime, the decimalSerializer extension converts them to native numbers.
+ * For TypeScript arithmetic, use Number() cast: Number(line.debit) || 0
  */
 
 import { PrismaClient } from '@prisma/client'

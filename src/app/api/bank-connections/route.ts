@@ -6,7 +6,6 @@ import { logger } from '@/lib/logger';
 import { getProvider, getAvailableBanks } from '@/lib/bank-providers';
 import { requirePermission, tenantFilter, companyScope, Permission, blockOversightMutation, requireNotDemoCompany } from '@/lib/rbac';
 import { requireTokenPayAccess } from '@/lib/tokenpay';
-import { getDemoFilter } from '@/lib/demo-filter';
 
 // GET - List bank connections or available banks
 export async function GET(request: NextRequest) {
@@ -348,7 +347,7 @@ async function performSync(connectionId: string, userId: string) {
           date: new Date(l.date),
           description: l.description,
           reference: l.reference,
-          amount: l.amount,
+          amount: Number(l.amount),
         }));
 
         const journalLineInputs = journalLines.map(jl => ({
@@ -357,7 +356,7 @@ async function performSync(connectionId: string, userId: string) {
           description: jl.journalEntry.description || '',
           accountNumber: jl.account.number,
           accountName: jl.account.name,
-          amount: jl.debit > 0 ? -jl.debit : jl.credit,
+          amount: Number(jl.debit) > 0 ? -Number(jl.debit) : Number(jl.credit),
         }));
 
         const matches = batchMatch(bankLineInputs, journalLineInputs, {

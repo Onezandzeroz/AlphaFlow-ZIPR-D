@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { getAuthContext } from '@/lib/session';
 import { auditCreate, auditUpdate, auditCancel, auditDeleteAttempt, requestMetadata } from '@/lib/audit';
 import { logger } from '@/lib/logger';
-import { TransactionType, VATCode } from '@prisma/client';
+import { TransactionType, Prisma, VATCode } from '@prisma/client';
 import { requirePermission, tenantFilter, companyScope, Permission, blockOversightMutation, requireNotDemoCompany } from '@/lib/rbac';
 import { requireTokenPayAccess } from '@/lib/tokenpay';
 import { ensureInitialBackup } from '@/lib/backup-scheduler';
@@ -27,7 +27,11 @@ export async function GET(request: NextRequest) {
     const companyId = ctx.activeCompanyId;
     if (companyId) {
       try {
-        const vatMap = await enrichTransactionsWithVAT(transactions, companyId);
+        const vatMap = await enrichTransactionsWithVAT(transactions.map(t => ({
+          ...t,
+          amount: Number(t.amount),
+          vatPercent: Number(t.vatPercent),
+        })), companyId);
         // Add journal-derived VAT to each transaction.
         // IMPORTANT: If no journal entry is found for a transaction, journalVAT
         // is set to null — we do NOT fall back to a fabricated amount × vatPercent
@@ -152,24 +156,24 @@ export async function POST(request: NextRequest) {
         ]);
 
         if (bankAccount) {
-          const jeLines: Array<{ accountId: string; debit: number; credit: number; description: string; vatCode: VATCode | null }> = [];
+          const jeLines: Array<{ accountId: string; debit: number; credit: number; description: string; vatCode: VATCode | null; companyId: string }> = [];
 
           // Debit expense account (net amount)
           // NOTE: Expense lines must NOT have a vatCode — only the dedicated INPUT_VAT
           // account lines (5410/5420) carry vatCode. The vat-register filters by
           // account.group, so tagging expense lines would inflate input VAT totals.
           if (expenseAccount) {
-            jeLines.push({ accountId: expenseAccount.id, debit: netAmount, credit: 0, description, vatCode: null });
+            jeLines.push({ accountId: expenseAccount.id, debit: netAmount, credit: 0, description, vatCode: null, companyId: ctx.activeCompanyId! });
           }
 
           // Debit input VAT account (VAT amount)
           if (inputVatAccount && vatAmount > 0) {
             const vatCode: VATCode = vatPct === 25 ? 'K25' : vatPct === 12 ? 'K12' : 'K0';
-            jeLines.push({ accountId: inputVatAccount.id, debit: Math.round(vatAmount * 100) / 100, credit: 0, description: `${description} – Indgående moms ${vatPct}%`, vatCode });
+            jeLines.push({ accountId: inputVatAccount.id, debit: Math.round(vatAmount * 100) / 100, credit: 0, description: `${description} – Indgående moms ${vatPct}%`, vatCode, companyId: ctx.activeCompanyId! });
           }
 
           // Credit bank account (gross amount)
-          jeLines.push({ accountId: bankAccount.id, debit: 0, credit: Math.round(grossAmount * 100) / 100, description: `${description} – Betaling`, vatCode: null });
+          jeLines.push({ accountId: bankAccount.id, debit: 0, credit: Math.round(grossAmount * 100) / 100, description: `${description} – Betaling`, vatCode: null, companyId: ctx.activeCompanyId! });
 
           // Only create if balanced (2 or more lines and debit === credit)
           const totalDebit = jeLines.reduce((s, l) => s + l.debit, 0);
@@ -185,7 +189,7 @@ export async function POST(request: NextRequest) {
                   status: 'POSTED',
                   userId: ctx.id,
                   companyId: ctx.activeCompanyId!,
-                  lines: { create: jeLines },
+                  lines: { create: jeLines.map(l => ({ companyId: l.companyId, account: { connect: { id: l.accountId } }, debit: l.debit, credit: l.credit, description: l.description, vatCode: l.vatCode })) },
                 },
               });
               logger.info(`[PURCHASE] Created journal entry for transaction ${transaction.id}: DR=${totalDebit}, CR=${totalCredit}`);
@@ -275,7 +279,7 @@ export async function PUT(request: NextRequest) {
 
     const transaction = await db.transaction.update({
       where: { id },
-      data: updateData,
+      data: updateData as Prisma.TransactionUpdateInput,
     });
 
     // Audit log with old/new values

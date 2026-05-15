@@ -66,15 +66,17 @@ export async function GET(request: NextRequest) {
       });
 
       // Audit: log bank connection activation
-      await auditUpdate(
-        connection.userId,
-        'BankConnection',
-        connection.id,
-        { status: 'PENDING' },
-        { status: 'ACTIVE' },
-        requestMetadata(request),
-        connection.companyId
-      );
+      if (connection.userId) {
+        await auditUpdate(
+          connection.userId,
+          'BankConnection',
+          connection.id,
+          { status: 'PENDING' },
+          { status: 'ACTIVE' },
+          requestMetadata(request),
+          connection.companyId
+        );
+      }
     }
 
     // Return a success page that closes the popup/redirects back
@@ -161,15 +163,17 @@ export async function POST(request: NextRequest) {
       });
 
       // Audit: log bank connection activation
-      await auditUpdate(
-        connection.userId,
-        'BankConnection',
-        connection.id,
-        { status: 'PENDING' },
-        { status: 'ACTIVE' },
-        requestMetadata(request),
-        connection.companyId
-      );
+      if (connection.userId) {
+        await auditUpdate(
+          connection.userId,
+          'BankConnection',
+          connection.id,
+          { status: 'PENDING' },
+          { status: 'ACTIVE' },
+          requestMetadata(request),
+          connection.companyId
+        );
+      }
 
       return NextResponse.json({ success: true, connectionId: connection.id, status: 'ACTIVE' });
     }

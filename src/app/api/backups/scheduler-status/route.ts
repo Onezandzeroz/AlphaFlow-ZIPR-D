@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
           totalBackupCount: totalBackups,
           completedBackupCount: completedBackups,
           failedCount,
-          totalStorage: totalStorageResult._sum.fileSize ?? 0,
+          totalStorage: totalStorageResult._sum?.fileSize ?? 0,
           latestBackup: latestBackup
             ? {
                 createdAt: latestBackup.createdAt.toISOString(),

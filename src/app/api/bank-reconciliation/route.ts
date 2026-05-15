@@ -5,7 +5,6 @@ import { requirePermission, tenantFilter, Permission, companyScope, type AuthCon
 import { requireTokenPayAccess } from '@/lib/tokenpay';
 import { auditCreate, auditUpdate, requestMetadata } from '@/lib/audit';
 import { logger } from '@/lib/logger';
-import { getDemoFilterFromContext } from '@/lib/demo-filter';
 
 // Helper to round to 2 decimals
 const r = (n: number) => Math.round(n * 100) / 100;
@@ -76,11 +75,11 @@ async function getCandidates(request: NextRequest, ctx: AuthContext) {
       description: jl.journalEntry.description || jl.journalEntry.reference || '',
       accountNumber: jl.account.number,
       accountName: jl.account.name,
-      debit: r(jl.debit || 0),
-      credit: r(jl.credit || 0),
-      amount: r(jl.debit > 0 ? -jl.debit : jl.credit), // Bank perspective
+      debit: r(Number(jl.debit) || 0),
+      credit: r(Number(jl.credit) || 0),
+      amount: r(Number(jl.debit) > 0 ? -Number(jl.debit) : Number(jl.credit)), // Bank perspective
     }))
-    .filter((c) => Math.abs(c.amount - bankLine.amount) < 1.0); // Within 1 DKK tolerance
+    .filter((c) => Math.abs(c.amount - Number(bankLine.amount)) < 1.0); // Within 1 DKK tolerance
 
   return NextResponse.json({ candidates });
 }
@@ -143,7 +142,7 @@ async function runAiMatch(request: NextRequest, ctx: AuthContext) {
       date: new Date(l.date),
       description: l.description,
       reference: l.reference,
-      amount: l.amount,
+      amount: Number(l.amount),
     }));
 
     const journalLineInputs = journalLines.map(jl => ({
@@ -152,7 +151,7 @@ async function runAiMatch(request: NextRequest, ctx: AuthContext) {
       description: jl.journalEntry.description || '',
       accountNumber: jl.account.number,
       accountName: jl.account.name,
-      amount: jl.debit > 0 ? -jl.debit : jl.credit,
+      amount: Number(jl.debit) > 0 ? -Number(jl.debit) : Number(jl.credit),
     }));
 
     // First run rule-based + fuzzy matching
@@ -339,14 +338,12 @@ export async function POST(request: NextRequest) {
     const closingBalance = sortedLines[sortedLines.length - 1].balance;
 
     // Fetch journal entry lines for the bank account for auto-matching
-    const bankDemoFilter = getDemoFilterFromContext(ctx);
     // Find the bank account by account group BANK or by account number matching the bankAccount identifier
     const bankAccounts = await db.account.findMany({
       where: {
         ...tenantFilter(ctx),
         group: 'BANK',
         isActive: true,
-        ...bankDemoFilter,
       },
     });
 
@@ -434,8 +431,8 @@ export async function POST(request: NextRequest) {
         // Check amount match ±0.01
         // Journal line can be debit (money out of bank) or credit (money into bank)
         // Bank statement amount: positive = money in, negative = money out
-        const journalAmount = jl.debit > 0 ? -jl.debit : jl.credit; // debit = out of bank, credit = into bank
-        const amountDiff = Math.abs(bankLine.amount - journalAmount);
+        const journalAmount = Number(jl.debit) > 0 ? -Number(jl.debit) : Number(jl.credit); // debit = out of bank, credit = into bank
+        const amountDiff = Math.abs(Number(bankLine.amount) - journalAmount);
 
         if (amountDiff <= 0.01) {
           bestMatchId = jl.id;

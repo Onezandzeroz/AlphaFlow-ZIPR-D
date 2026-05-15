@@ -3,7 +3,6 @@ import { db } from '@/lib/db';
 import { getAuthContext } from '@/lib/session';
 import { auditCreate, requestMetadata } from '@/lib/audit';
 import { AccountType, AccountGroup } from '@prisma/client';
-import { getDemoFilter, applyDemoFilter } from '@/lib/demo-filter';
 import { logger } from '@/lib/logger';
 import { requirePermission, tenantFilter, companyScope, Permission, blockOversightMutation, requireNotDemoCompany } from '@/lib/rbac';
 import { requireTokenPayAccess } from '@/lib/tokenpay';

@@ -137,8 +137,8 @@ export async function GET(request: NextRequest) {
         ) {
           const existing = accountMap.get(line.accountId);
           if (existing) {
-            existing.debit += line.debit || 0;
-            existing.credit += line.credit || 0;
+            existing.debit += Number(line.debit) || 0;
+            existing.credit += Number(line.credit) || 0;
           } else {
             // Account may have been deactivated — still include it
             accountMap.set(line.accountId, {
@@ -147,8 +147,8 @@ export async function GET(request: NextRequest) {
               name: line.account.name,
               type: line.account.type,
               group: line.account.group,
-              debit: line.debit || 0,
-              credit: line.credit || 0,
+              debit: Number(line.debit) || 0,
+              credit: Number(line.credit) || 0,
               naturalBalance: 0,
             });
           }
@@ -458,14 +458,14 @@ export async function POST(request: NextRequest) {
         ) {
           const existing = accountMap.get(line.accountId);
           if (existing) {
-            existing.debit += line.debit || 0;
-            existing.credit += line.credit || 0;
+            existing.debit += Number(line.debit) || 0;
+            existing.credit += Number(line.credit) || 0;
           } else {
             accountMap.set(line.accountId, {
               id: line.account.id,
               type: line.account.type,
-              debit: line.debit || 0,
-              credit: line.credit || 0,
+              debit: Number(line.debit) || 0,
+              credit: Number(line.credit) || 0,
             });
           }
         }
@@ -473,7 +473,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Build closing journal entry lines
-    const closingLinesData: Array<{ accountId: string; debit: number; credit: number; description: string }> = [];
+    const closingLinesData: Array<{ accountId: string; debit: number; credit: number; description: string; companyId: string }> = [];
     let totalRevenueDebit = 0;
     let totalExpenseCredit = 0;
 
@@ -574,7 +574,10 @@ export async function POST(request: NextRequest) {
         userId: ctx.id,
         companyId: ctx.activeCompanyId!,
         lines: {
-          create: closingLinesData,
+          create: closingLinesData.map(({ accountId, ...rest }) => ({
+            ...rest,
+            account: { connect: { id: accountId } },
+          })),
         },
       },
       include: {
