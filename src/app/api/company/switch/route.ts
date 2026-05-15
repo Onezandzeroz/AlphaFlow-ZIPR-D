@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
       success: true,
       companyId,
       companyName: displayCompanyName,
-      isDemoCompany: company.isDemo,
+      isDemoCompany: company.isDemo && company.cvrNumber === '29876543',
       role: membership?.role ?? (ctx.isSuperDev ? 'OWNER' : null),
     });
   } catch (error) {

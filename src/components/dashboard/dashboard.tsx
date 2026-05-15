@@ -175,7 +175,6 @@ const COLORS = ['#0d9488', '#7c9a82', '#d4915c', '#6366f1', '#c9928f', '#7dabb5'
 // ─── Component ────────────────────────────────────────────────────
 
 export function Dashboard({ user, onNavigate, onboardingStepJustDone, onOnboardingStepDoneConsumed }: DashboardProps) {
-  const { setUser } = useAuthStore();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -372,7 +371,12 @@ export function Dashboard({ user, onNavigate, onboardingStepJustDone, onOnboardi
         const demoData = await demoModeRes.json();
         const isDemo = demoData.isDemoCompany === true;
         setDemoModeEnabled(isDemo);
-        setUser({ ...user, demoModeEnabled: isDemo, isDemoCompany: isDemo });
+        // Use getState() to avoid stale closure — useCallback deps are [] so
+        // the `user` prop captured in the closure can become outdated.
+        const freshUser = useAuthStore.getState().user;
+        if (freshUser) {
+          useAuthStore.getState().setUser({ ...freshUser, demoModeEnabled: isDemo, isDemoCompany: isDemo });
+        }
       }
     } catch (error) {
       console.error('Failed to fetch onboarding data:', error);

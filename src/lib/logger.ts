@@ -57,8 +57,14 @@ function formatArgs(args: LogArgs): string {
 function emit(level: LogLevel, args: LogArgs): void {
   if (!shouldLog(level)) return;
   const output = formatArgs(args);
-  // Always use stderr to avoid interfering with stdout-based responses
-  process.stderr.write(`${level.toUpperCase()}: ${output}\n`);
+  // Always use stderr to avoid interfering with stdout-based responses.
+  // In the browser, process.stderr is undefined — fall back to console.
+  if (typeof process !== 'undefined' && process.stderr && typeof process.stderr.write === 'function') {
+    process.stderr.write(`${level.toUpperCase()}: ${output}\n`);
+  } else if (typeof console !== 'undefined') {
+    const consoleFn = level === 'error' ? console.error : level === 'warn' ? console.warn : console.log;
+    consoleFn(`${level.toUpperCase()}: ${output}`);
+  }
 }
 
 export const logger = {
