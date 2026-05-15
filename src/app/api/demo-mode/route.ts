@@ -175,11 +175,32 @@ export async function POST(request: NextRequest) {
 
         logger.info('[Demo Mode] Created and seeded demo company:', demoCompanyId);
       } else {
-        // Demo company already exists with its prefabricated data — just switch to it.
-        // The data is seeded ONCE on creation; it is NOT re-seeded on each visit.
-        // Multiple tenants may be viewing the demo company simultaneously.
+        // Demo company already exists — ensure data is up-to-date by re-seeding.
+        // The seed engine is deterministic and fast; this guarantees fresh,
+        // correct data regardless of when the company was first created.
         demoCompanyId = demoCompany.id;
-        logger.info('[Demo Mode] Switching to existing demo company:', demoCompanyId);
+
+        // Delete all existing demo data in dependency order (child → parent)
+        await db.$transaction([
+          db.journalEntryLine.deleteMany({ where: { journalEntry: { companyId: demoCompany.id } } }),
+          db.journalEntry.deleteMany({ where: { companyId: demoCompany.id } }),
+          db.bankStatementLine.deleteMany({ where: { bankStatement: { companyId: demoCompany.id } } }),
+          db.bankStatement.deleteMany({ where: { companyId: demoCompany.id } }),
+          db.budgetEntry.deleteMany({ where: { budget: { companyId: demoCompany.id } } }),
+          db.budget.deleteMany({ where: { companyId: demoCompany.id } }),
+          db.transaction.deleteMany({ where: { companyId: demoCompany.id } }),
+          db.invoice.deleteMany({ where: { companyId: demoCompany.id } }),
+          db.fiscalPeriod.deleteMany({ where: { companyId: demoCompany.id } }),
+          db.contact.deleteMany({ where: { companyId: demoCompany.id } }),
+          db.account.deleteMany({ where: { companyId: demoCompany.id } }),
+          db.recurringEntry.deleteMany({ where: { companyId: demoCompany.id } }),
+          db.bankConnection.deleteMany({ where: { companyId: demoCompany.id } }),
+        ]);
+
+        // Re-seed with fresh, corrected data
+        await seedDemoCompany(demoCompanyId, ctx.id);
+
+        logger.info('[Demo Mode] Re-seeded existing demo company:', demoCompanyId);
       }
 
       // Ensure the user has a UserCompany membership for the demo company

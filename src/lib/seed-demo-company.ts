@@ -353,24 +353,11 @@ function buildInvoices(): InvoiceSeed[] {
           }
         }
 
-        // Build line items
+        // Build line items — must match the revenue item exactly
+        // so that journal entries (single source of truth) stay consistent.
         const lineItems: InvoiceLineItem[] = [
           { description: item.serviceDesc, quantity: 1, unitPrice: item.net, vatPercent: 25 },
         ]
-        // Occasionally add a second line (30% chance, but not for CANCELLED/DRAFT)
-        if (
-          status === 'PAID' || status === 'SENT'
-        ) {
-          if (seededRandom(year * 10000 + m * 100 + i * 7 + 99) > 0.7) {
-            const extra = Math.round(item.net * 0.12 / 500) * 500
-            lineItems.push({
-              description: 'Tillægsydelser og dokumentation',
-              quantity: 1,
-              unitPrice: Math.max(5000, extra),
-              vatPercent: 25,
-            })
-          }
-        }
 
         invoices.push({
           invoiceNumber,
@@ -522,10 +509,9 @@ function calcQuarterlyOutputVat(year: number, quarter: number): number {
 }
 
 /** Sum up input VAT from rent + telecom for a given quarter */
-function calcQuarterlyInputVat(year: number, quarter: number): number {
-  const months = quarter === 1 && year === PREV_YEAR ? 2 : 3
+function calcQuarterlyInputVat(_year: number, quarter: number): number {
   let total = 0
-  for (let j = 0; j < months; j++) {
+  for (let j = 0; j < 3; j++) {
     const m = (quarter - 1) * 3 + 1 + j
     total += vat25(RENT_NET) + vat25(TELECOM_NET)
   }
@@ -1126,15 +1112,7 @@ function buildBudgets(): { year: number; entries: BudgetAccountEntry[]; name: st
 // ─── Main Seed Function ──────────────────────────────────────────
 
 export async function seedDemoCompany(demoCompanyId: string, systemUserId: string): Promise<void> {
-  // ─── Idempotency check ─────────────────────────────────────────
-  const existingContacts = await db.contact.count({
-    where: { companyId: demoCompanyId },
-  })
-  if (existingContacts > 0) {
-    console.log('[seed-demo-company] Demo data already exists for company', demoCompanyId, '– skipping')
-    return
-  }
-
+  // ─── No idempotency check — caller handles cleanup ─────
   console.log('[seed-demo-company] Seeding demo data for company', demoCompanyId)
 
   // ─── 1. Chart of Accounts ──────────────────────────────────────
