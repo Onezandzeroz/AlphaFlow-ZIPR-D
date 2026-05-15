@@ -874,7 +874,8 @@ function calcTotalAccountCredit(year: number, _accountNumber: string): number {
   let total = 0
   // Include carried-forward revenue from opening balance (only for PREV_YEAR)
   if (year === PREV_YEAR) {
-    total += carriedNet
+    const _carriedVat = vat25(r(CARRIED_RECEIVABLES / 1.25))
+    total += r(CARRIED_RECEIVABLES - _carriedVat)
   }
   for (let m = 1; m <= 12; m++) {
     const items = REVENUE_MAP.get(`${year}-${m}`)
@@ -991,12 +992,13 @@ function buildBankStatements(): BankStatementSeed[] {
 
         // Prior-period VAT settlement (prev year Jan only)
         if (year === PREV_YEAR && m === 1 && q === 0) {
-          balance = Math.round(balance - carriedVat)
+          const _cVat = vat25(r(CARRIED_RECEIVABLES / 1.25))
+          balance = Math.round(balance - _cVat)
           lines.push({
             date: d(year, 1, 2),
             description: 'Skattestyrelsen – Moms foregående periode',
             reference: 'MOMS-REST',
-            amount: -carriedVat,
+            amount: -_cVat,
             balance,
             reconciliationStatus: 'MATCHED',
           })
@@ -1278,7 +1280,6 @@ export async function seedDemoCompany(demoCompanyId: string, systemUserId: strin
         // invoiceId is NOT set for PURCHASE/SALARY/BANK transactions
         // (sales come from Invoice records, not DB transactions)
         invoiceId: null,
-        contactId: t.contactIndex !== undefined ? contactIds[t.contactIndex] : null,
       },
     })
     txIdMap.set(t.key, tx.id)
