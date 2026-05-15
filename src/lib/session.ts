@@ -142,6 +142,7 @@ export async function getAuthContext(request?: Request): Promise<AuthContext | n
           id: true,
           name: true,
           isDemo: true,
+          cvrNumber: true,
         },
       },
       oversightCompany: {
@@ -202,7 +203,7 @@ export async function getAuthContext(request?: Request): Promise<AuthContext | n
     activeCompanyRole,
     activeCompanyName: session.activeCompany?.name ?? null,
     demoModeEnabled: session.user.demoModeEnabled,
-    isDemoCompany: session.activeCompany?.isDemo ?? false,
+    isDemoCompany: session.activeCompany?.isDemo === true && session.activeCompany?.cvrNumber === '29876543',
     oversightCompanyId: session.oversightCompanyId,
     oversightCompanyName: session.oversightCompany?.name ?? null,
     isOversightMode: session.oversightCompanyId !== null,

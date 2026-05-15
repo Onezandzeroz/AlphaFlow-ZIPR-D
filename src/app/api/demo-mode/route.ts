@@ -16,6 +16,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // ctx.isDemoCompany is now verified against the demo company's CVR number
+    // (see session.ts getAuthContext), so it's safe to use directly.
     const isDemoCompany = ctx.isDemoCompany;
 
     return NextResponse.json({
@@ -108,7 +110,8 @@ export async function POST(request: NextRequest) {
     if (action === 'enter') {
       // ── Enter demo mode ──────────────────────────────────────
 
-      // If already in the demo company, return success
+      // ctx.isDemoCompany is now verified against the demo company's CVR number
+      // (see session.ts getAuthContext), so if it's true, we're already in the demo company.
       if (ctx.isDemoCompany) {
         return NextResponse.json({
           message: 'Demo mode enabled',
@@ -119,15 +122,13 @@ export async function POST(request: NextRequest) {
         });
       }
 
-      // Find the shared demo company
+      // Find the shared demo company (identified by CVR number)
       let demoCompany = await db.company.findFirst({
         where: {
-          isDemo: true,
           isActive: true,
           cvrNumber: '29876543',
         },
       });
-
       let demoCompanyId: string;
 
       if (!demoCompany) {
