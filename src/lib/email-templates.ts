@@ -1,5 +1,5 @@
 /**
- * Email HTML Templates for AlphaAi Regnskab
+ * Email HTML Templates for AlphaFlow Regnskab & Bogføring
  *
  * All templates use inline CSS (email clients don't support <style> tags).
  * Bilingual: Danish (default) / English.
@@ -8,7 +8,7 @@
 
 type Language = 'da' | 'en';
 
-const APP_NAME = 'AlphaAi Regnskab';
+const APP_NAME = 'AlphaFlow Regnskab & Bogføring';
 const PRIMARY = '#0d9488';
 const PRIMARY_DARK = '#0f766e';
 const BG_LIGHT = '#f0fdfa';

@@ -1,5 +1,5 @@
 /**
- * Email Service for AlphaAi Regnskab
+ * Email Service for AlphaFlow Regnskab & Bogføring
  *
  * Features:
  * - SMTP transport (configurable via env vars)
@@ -214,8 +214,8 @@ export async function sendVerificationEmail(
   const verifyUrl = `${getAppUrl()}/?verify=${token}`;
   const subject =
     language === 'da'
-      ? 'Bekræft din e-mailadresse — AlphaAi Regnskab'
-      : 'Verify your email address — AlphaAi Regnskab';
+      ? 'Bekræft din e-mailadresse — AlphaFlow Regnskab & Bogføring'
+      : 'Verify your email address — AlphaFlow Regnskab & Bogføring';
 
   return sendEmail({
     to,
@@ -238,8 +238,8 @@ export async function sendPasswordResetEmail(
   const resetUrl = `${getAppUrl()}/reset-password?token=${token}`;
   const subject =
     language === 'da'
-      ? 'Nulstil din adgangskode — AlphaAi Regnskab'
-      : 'Reset your password — AlphaAi Regnskab';
+      ? 'Nulstil din adgangskode — AlphaFlow Regnskab & Bogføring'
+      : 'Reset your password — AlphaFlow Regnskab & Bogføring';
 
   return sendEmail({
     to,
@@ -265,8 +265,8 @@ export async function sendInvitationEmail(
   const acceptUrl = `${getAppUrl()}/?invite=${token}`;
   const subject =
     language === 'da'
-      ? `Invitation til ${companyName} — AlphaAi Regnskab`
-      : `Invitation to ${companyName} — AlphaAi Regnskab`;
+      ? `Invitation til ${companyName} — AlphaFlow Regnskab & Bogføring`
+      : `Invitation to ${companyName} — AlphaFlow Regnskab & Bogføring`;
 
   return sendEmail({
     to,
@@ -289,7 +289,7 @@ export async function sendOwnerNotification(
 ): Promise<{ success: boolean; logId: string }> {
   return sendEmail({
     to,
-    subject: `🔔 ${subject} — AlphaAi Regnskab`,
+    subject: `🔔 ${subject} — AlphaFlow Regnskab & Bogføring`,
     html: ownerNotificationHtml(language, subject, bodyHtml),
     template: 'owner-notification',
     metadata,
