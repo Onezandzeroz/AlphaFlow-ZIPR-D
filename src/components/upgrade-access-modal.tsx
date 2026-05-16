@@ -65,12 +65,22 @@ export function UpgradeAccessModal() {
 
   const handleGoToSettings = useCallback(() => {
     dismiss();
-    window.location.hash = '#settings?tab=access';
+    // Dispatch custom event for reliable direct navigation to Settings > Access tab.
+    // Falls back to hash change which the hashchange listener also picks up.
+    const targetHash = '#settings?tab=access';
+    window.location.hash = targetHash;
+    window.dispatchEvent(new CustomEvent('app:navigate', {
+      detail: { view: 'settings', hash: targetHash },
+    }));
   }, [dismiss]);
 
   const handlePurchaseToken = useCallback(() => {
     dismiss();
-    window.location.hash = '#settings?tab=access';
+    const targetHash = '#settings?tab=access';
+    window.location.hash = targetHash;
+    window.dispatchEvent(new CustomEvent('app:navigate', {
+      detail: { view: 'settings', hash: targetHash },
+    }));
   }, [dismiss]);
 
   if (!isOpen) return null;

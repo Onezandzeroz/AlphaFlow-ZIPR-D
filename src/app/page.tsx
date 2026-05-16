@@ -127,8 +127,10 @@ export default function Home() {
     });
   }, []);
 
-  // Listen for browser back/forward
+  // Listen for browser back/forward, external hash changes, and sync view after hydration
   useEffect(() => {
+    if (!hydrated) return;
+
     const handlePopState = (e: PopStateEvent) => {
       if (isNavigatingRef.current) return;
       const view = (e.state?.view as View) || 'dashboard';
@@ -149,14 +151,42 @@ export default function Home() {
     window.addEventListener('popstate', handlePopState);
     window.addEventListener('hashchange', handleHashChange);
 
-    // Set initial history state so back button works from first navigation
-    window.history.replaceState({ view: currentView }, '', `#${currentView}`);
+    // Set initial history state — preserve any existing query params (e.g. ?tab=access)
+    const currentHash = window.location.hash || `#${currentView}`;
+    window.history.replaceState({ view: currentView }, '', currentHash);
+
+    // One-time sync: during SSR, getInitialView() returns 'dashboard' because window
+    // is undefined. React hydration preserves the server state, so we correct the
+    // view from the URL hash here on first client render.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- legitimate one-time hydration sync from external URL state
+    setCurrentView((prev) => {
+      const fromHash = getInitialView();
+      return fromHash !== prev ? fromHash : prev;
+    });
 
     return () => {
       window.removeEventListener('popstate', handlePopState);
       window.removeEventListener('hashchange', handleHashChange);
     };
-  }, [currentView]);
+  }, [currentView, hydrated]);
+
+  // ─── Listen for direct app:navigate events (used by UpgradeAccessModal) ───
+  useEffect(() => {
+    const handleAppNavigate = (e: Event) => {
+      const { view, hash } = (e as CustomEvent).detail;
+      const parsedView = view as View;
+      if (parsedView && VALID_VIEWS.includes(parsedView)) {
+        isNavigatingRef.current = true;
+        setCurrentView(parsedView);
+        window.history.replaceState({ view: parsedView }, '', hash || `#${parsedView}`);
+        requestAnimationFrame(() => {
+          isNavigatingRef.current = false;
+        });
+      }
+    };
+    window.addEventListener('app:navigate', handleAppNavigate);
+    return () => window.removeEventListener('app:navigate', handleAppNavigate);
+  }, []);
 
   // ─── Mobile swipe navigation (must be before any early returns) ──
   const { state: swipeState, containerWidth, onSettleComplete, containerRef, handlers: swipeHandlers } =

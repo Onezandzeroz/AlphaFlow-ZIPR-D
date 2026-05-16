@@ -114,6 +114,20 @@ export function SettingsPage({ user, onNavigate }: SettingsPageProps) {
     fetchPreferences();
   }, [fetchPreferences]);
 
+  // ── React to hash changes while already mounted (e.g. modal navigates to #settings?tab=access) ──
+  useEffect(() => {
+    const handleHashChange = () => {
+      const raw = window.location.hash.replace('#', '');
+      const params = new URLSearchParams(raw.split('?')[1] || '');
+      const tab = params.get('tab');
+      if (tab && ['company', 'account', 'defaults', 'access', 'oversight'].includes(tab)) {
+        setActiveTab(tab);
+      }
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
   // ── Track changes ──
   useEffect(() => {
     if (originalPrefs) {
