@@ -72,6 +72,9 @@ import { BudgetVsActualWidget } from '@/components/budget-vs-actual/budget-vs-ac
 import { CashFlowForecast } from '@/components/cash-flow-forecast/cash-flow-forecast';
 import { CategorizationSuggestionsList } from '@/components/transaction/categorization-badge';
 import { OnboardingCompleteOverlay } from '@/components/dashboard/onboarding-complete-overlay';
+import { SubscriptionPlansWidget } from '@/components/dashboard/subscription-plans-widget';
+import { useAccessCacheStore } from '@/hooks/use-write-access-guard';
+import { hasAccess } from '@/lib/tokenpay';
 import { format, subMonths, startOfYear, startOfMonth, addMonths } from 'date-fns';
 import {
   PieChart,
@@ -205,6 +208,11 @@ export function Dashboard({ user, onNavigate, onboardingStepJustDone, onOnboardi
   const [onboardingVideoExists, setOnboardingVideoExists] = useState(true);
   const [showCompletionOverlay, setShowCompletionOverlay] = useState(false);
   const { isWidgetVisible, toggleWidget, resetWidgets, isAppOwner, widgetOrder, moveWidgetUp, moveWidgetDown, getWidgetOrderIndex } = useDashboardWidgets();
+
+  // ─── Access status for subscription widget ─────────────────
+  const accessResult = useAccessCacheStore((s) => s.result);
+  const accessIsOwner = useAccessCacheStore((s) => s.isOwner);
+  const showSubscriptionWidget = accessResult !== null && !accessIsOwner && !hasAccess(accessResult);
 
   const widgetOrderMap = useMemo(() => {
     const map: Record<string, number> = {};
@@ -1377,6 +1385,11 @@ export function Dashboard({ user, onNavigate, onboardingStepJustDone, onOnboardi
       {/* ═══════════════════════════════════════════════════════════
           MODE: Double-Entry Dashboard
           ═══════════════════════════════════════════════════════════ */}
+
+        {/* ─── Subscription Plans Widget (shown when no .tbkey / write access) ─── */}
+        {showSubscriptionWidget && (
+          <SubscriptionPlansWidget />
+        )}
 
         <div className="flex flex-col gap-4 lg:gap-6">
           {/* ─── KPI Stat Cards ──────────────────────────────── */}
