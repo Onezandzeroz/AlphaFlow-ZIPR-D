@@ -35,6 +35,7 @@ import { CompanySettingsPage } from '@/components/settings/company-settings-page
 import { SettingsPage } from '@/components/settings/settings-page';
 import { Loader2 } from 'lucide-react';
 import { useScannerStore } from '@/lib/scanner-store';
+import { useWriteAccessGuard } from '@/hooks/use-write-access-guard';
 import { useSwipeNavigation } from '@/lib/use-swipe-navigation';
 import { SwipeViewContainer } from '@/components/swipe-view-container';
 import { ReceiptScanner } from '@/components/scanner/ReceiptScanner';
@@ -231,9 +232,12 @@ export default function Home() {
    */
   const scannerOpen = useScannerStore((s) => s.isOpen);
 
+  // ─── Write access guard: check before any form that leads to a write ───
+  const { guardWriteAccess } = useWriteAccessGuard(user);
+
   const handleOpenScanner = useCallback(() => {
-    useScannerStore.getState().openScanner();
-  }, []);
+    guardWriteAccess(t('addTransaction'), () => useScannerStore.getState().openScanner());
+  }, [guardWriteAccess, t]);
 
   const handleStandaloneCapture = useCallback((file: File) => {
     useScannerStore.getState().completeScan(file);
@@ -247,14 +251,18 @@ export default function Home() {
   }, []);
 
   const handleCreateInvoice = useCallback(() => {
-    setPendingCreateAction('create-invoice');
-    navigateToView('invoices');
-  }, [navigateToView]);
+    guardWriteAccess(t('createInvoice'), () => {
+      setPendingCreateAction('create-invoice');
+      navigateToView('invoices');
+    });
+  }, [guardWriteAccess, t, navigateToView]);
 
   const handleCreateContact = useCallback(() => {
-    setPendingCreateAction('create-contact');
-    navigateToView('contacts');
-  }, [navigateToView]);
+    guardWriteAccess(t('createContact'), () => {
+      setPendingCreateAction('create-contact');
+      navigateToView('contacts');
+    });
+  }, [guardWriteAccess, t, navigateToView]);
 
   // ─── Email verification screen (?verify=TOKEN) ───
   // IMPORTANT: Check verifyToken BEFORE isLoading to avoid the auth spinner

@@ -59,6 +59,7 @@ import {
   X,
 } from 'lucide-react';
 import { PageHeader } from '@/components/shared/page-header';
+import { useWriteAccessGuard } from '@/hooks/use-write-access-guard';
 
 // ─── Types ────────────────────────────────────────────────────────
 
@@ -113,6 +114,7 @@ const STATUS_CONFIG: Record<string, { label_da: string; label_en: string; classN
 
 export function RecurringEntriesPage({ user, hideHeader, triggerCreate }: { user: User; hideHeader?: boolean; triggerCreate?: number }) {
   const { language, tc, td, t } = useTranslation();
+  const { guardWriteAccess } = useWriteAccessGuard(user);
   const [entries, setEntries] = useState<RecurringEntry[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -173,9 +175,11 @@ export function RecurringEntriesPage({ user, hideHeader, triggerCreate }: { user
   useEffect(() => {
     if (triggerCreate && triggerCreate > 0) {
       resetForm();
-      setIsDialogOpen(true);
+      guardWriteAccess(language === 'da' ? 'Opret gentagende postering' : 'Create recurring entry', () => {
+        setIsDialogOpen(true);
+      });
     }
-  }, [triggerCreate]);
+  }, [triggerCreate, guardWriteAccess, language]);
 
   // ─── Form helpers ──────────────────────────────────────────────
 
@@ -393,7 +397,7 @@ export function RecurringEntriesPage({ user, hideHeader, triggerCreate }: { user
               {language === 'da' ? 'Opdater' : 'Refresh'}
             </Button>
             <Button
-              onClick={() => { resetForm(); setIsDialogOpen(true); }}
+              onClick={() => { resetForm(); guardWriteAccess(language === 'da' ? 'Opret gentagende postering' : 'Create recurring entry', () => setIsDialogOpen(true)); }}
               className="bg-[#0d9488] hover:bg-[#0f766e] text-white border border-[#0d9488] gap-2 font-medium transition-all lg:bg-white/20 lg:hover:bg-white/30 lg:border-white/30 lg:backdrop-blur-sm"
             >
               <Plus className="h-4 w-4" />
@@ -480,7 +484,7 @@ export function RecurringEntriesPage({ user, hideHeader, triggerCreate }: { user
                   : 'No recurring entries yet'}
               </p>
               <Button
-                onClick={() => { resetForm(); setIsDialogOpen(true); }}
+                onClick={() => { resetForm(); guardWriteAccess(language === 'da' ? 'Opret gentagende postering' : 'Create recurring entry', () => setIsDialogOpen(true)); }}
                 className="gap-2 bg-[#0d9488] hover:bg-[#0f766e] text-white"
               >
                 <Plus className="h-4 w-4" />

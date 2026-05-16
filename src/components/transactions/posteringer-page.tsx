@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/dialog';
 import { Receipt, RefreshCw, Plus, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useWriteAccessGuard } from '@/hooks/use-write-access-guard';
 
 interface PosteringerPageProps {
   user: any; // User type from auth-store
@@ -28,6 +29,7 @@ export function PosteringerPage({ user, defaultTab = 'transactions' }: Postering
   const { language } = useLanguageStore();
   const { t } = useTranslation();
   const isDa = language === 'da';
+  const { guardWriteAccess } = useWriteAccessGuard(user);
   const [activeTab, setActiveTab] = useState<'transactions' | 'recurring'>(defaultTab);
   const [isTransactionDialogOpen, setIsTransactionDialogOpen] = useState(false);
   const [recurringTrigger, setRecurringTrigger] = useState(0);
@@ -94,16 +96,22 @@ export function PosteringerPage({ user, defaultTab = 'transactions' }: Postering
   }, []);
 
   const handleOpenRecurringDialog = useCallback(() => {
-    setRecurringTrigger((prev) => prev + 1);
-  }, []);
+    guardWriteAccess(
+      isDa ? 'Opret tilbagevendende postering' : 'Create recurring entry',
+      () => setRecurringTrigger((prev) => prev + 1),
+    );
+  }, [guardWriteAccess, isDa]);
 
   // Switch from transaction dialog to recurring entry: close dialog, switch tab, open recurring create
   const handleSwitchToRecurring = useCallback(() => {
     setIsTransactionDialogOpen(false);
     setActiveTab('recurring');
     // Small delay so the tab switch renders RecurringEntriesPage before triggering create
-    setTimeout(() => setRecurringTrigger((prev) => prev + 1), 100);
-  }, []);
+    setTimeout(() => guardWriteAccess(
+      isDa ? 'Opret tilbagevendende postering' : 'Create recurring entry',
+      () => setRecurringTrigger((prev) => prev + 1),
+    ), 100);
+  }, [guardWriteAccess, isDa]);
 
   /**
    * CRITICAL FIX: Prevent Radix Dialog from closing when the embedded scanner is active.
@@ -163,7 +171,7 @@ export function PosteringerPage({ user, defaultTab = 'transactions' }: Postering
           action={
             <Dialog open={isTransactionDialogOpen} onOpenChange={handleDialogOpenChange}>
               <Button
-                onClick={() => setIsTransactionDialogOpen(true)}
+                onClick={() => guardWriteAccess(isDa ? 'Tilføj indkøb' : 'Add Purchase', () => setIsTransactionDialogOpen(true))}
                 className="bg-[#0d9488] hover:bg-[#0f766e] text-white border border-[#0d9488] gap-2 lg:bg-white/20 lg:hover:bg-white/30 lg:border-white/30 lg:backdrop-blur-sm text-sm font-medium transition-all"
               >
                 <Plus className="h-4 w-4" />

@@ -110,6 +110,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { da, enGB } from 'date-fns/locale';
 import { toast } from "sonner";
 import { useAccessErrorHandler } from '@/hooks/use-access-error-handler';
+import { useWriteAccessGuard } from '@/hooks/use-write-access-guard';
 import { PageHeader } from '@/components/shared/page-header';
 import { StatsCard } from '@/components/shared/stats-card';
 import { MobileFilterDropdown } from '@/components/shared/mobile-filter-dropdown';
@@ -199,6 +200,8 @@ type PageView = 'list' | 'create';
 export function InvoicesPage({ user, initialView, onInitialViewConsumed }: InvoicesPageProps) {
   const { t, tc, td, language } = useTranslation();
   const { handleMutationError } = useAccessErrorHandler();
+  const isDanish = language === 'da';
+  const { guardWriteAccess } = useWriteAccessGuard(user);
 
   // State
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -2019,11 +2022,13 @@ export function InvoicesPage({ user, initialView, onInitialViewConsumed }: Invoi
           <div className="flex items-center gap-2">
             <Button
               onClick={() => {
-                if (!companyInfo) {
-                  setShowCompanySetup(true);
-                } else {
-                  setCurrentView('create');
-                }
+                guardWriteAccess(isDanish ? 'Opret faktura' : 'Create invoice', () => {
+                  if (!companyInfo) {
+                    setShowCompanySetup(true);
+                  } else {
+                    setCurrentView('create');
+                  }
+                });
               }}
               className="bg-[#0d9488] hover:bg-[#0f766e] text-white border border-[#0d9488] lg:bg-white/20 lg:hover:bg-white/30 lg:border-white/30 lg:backdrop-blur-sm gap-2"
             >
@@ -2232,11 +2237,13 @@ export function InvoicesPage({ user, initialView, onInitialViewConsumed }: Invoi
                 {invoices.length === 0 ? (
                   <Button
                     onClick={() => {
-                      if (!companyInfo) {
-                        setShowCompanySetup(true);
-                      } else {
-                        setCurrentView('create');
-                      }
+                      guardWriteAccess(isDanish ? 'Opret faktura' : 'Create invoice', () => {
+                        if (!companyInfo) {
+                          setShowCompanySetup(true);
+                        } else {
+                          setCurrentView('create');
+                        }
+                      });
                     }}
                     className="bg-[#0d9488] hover:bg-[#0d9488]/90 text-white gap-2 shadow-md shadow-[#0d9488]/25"
                   >
@@ -2472,11 +2479,13 @@ export function InvoicesPage({ user, initialView, onInitialViewConsumed }: Invoi
               {invoices.length === 0 ? (
                 <Button
                   onClick={() => {
-                    if (!companyInfo) {
-                      setShowCompanySetup(true);
-                    } else {
-                      setCurrentView('create');
-                    }
+                    guardWriteAccess(isDanish ? 'Opret faktura' : 'Create invoice', () => {
+                      if (!companyInfo) {
+                        setShowCompanySetup(true);
+                      } else {
+                        setCurrentView('create');
+                      }
+                    });
                   }}
                   className="bg-[#0d9488] hover:bg-[#0d9488]/90 text-white gap-2 shadow-md shadow-[#0d9488]/25"
                 >

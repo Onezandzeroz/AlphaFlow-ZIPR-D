@@ -49,6 +49,7 @@ import {
 import { PageHeader } from '@/components/shared/page-header';
 import { MobileFilterDropdown } from '@/components/shared/mobile-filter-dropdown';
 import { useAccessErrorHandler } from '@/hooks/use-access-error-handler';
+import { useWriteAccessGuard } from '@/hooks/use-write-access-guard';
 import {
   Users,
   Plus,
@@ -208,6 +209,7 @@ export function ContactsPage({ user, autoOpenCreate, onAutoCreateConsumed }: Con
   const { language } = useTranslation();
   const isDanish = language === 'da';
   const { handleMutationError } = useAccessErrorHandler();
+  const { guardWriteAccess } = useWriteAccessGuard(user);
 
   // Data state
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -298,28 +300,38 @@ export function ContactsPage({ user, autoOpenCreate, onAutoCreateConsumed }: Con
   // ─── Form Handlers ──────────────────────────────────────────────────────
 
   const openCreateDialog = () => {
-    setEditingContact(null);
-    setFormData(EMPTY_FORM);
-    setFormError(null);
-    setIsFormOpen(true);
+    guardWriteAccess(
+      isDanish ? 'Opret kontakt' : 'Create contact',
+      () => {
+        setEditingContact(null);
+        setFormData(EMPTY_FORM);
+        setFormError(null);
+        setIsFormOpen(true);
+      },
+    );
   };
 
   const openEditDialog = (contact: Contact) => {
-    setEditingContact(contact);
-    setFormData({
-      name: contact.name,
-      cvrNumber: contact.cvrNumber || '',
-      email: contact.email || '',
-      phone: contact.phone || '',
-      address: contact.address || '',
-      city: contact.city || '',
-      postalCode: contact.postalCode || '',
-      country: contact.country || 'Danmark',
-      type: contact.type,
-      notes: contact.notes || '',
-    });
-    setFormError(null);
-    setIsFormOpen(true);
+    guardWriteAccess(
+      isDanish ? 'Rediger kontakt' : 'Edit contact',
+      () => {
+        setEditingContact(contact);
+        setFormData({
+          name: contact.name,
+          cvrNumber: contact.cvrNumber || '',
+          email: contact.email || '',
+          phone: contact.phone || '',
+          address: contact.address || '',
+          city: contact.city || '',
+          postalCode: contact.postalCode || '',
+          country: contact.country || 'Danmark',
+          type: contact.type,
+          notes: contact.notes || '',
+        });
+        setFormError(null);
+        setIsFormOpen(true);
+      },
+    );
   };
 
   const handleSave = useCallback(async () => {

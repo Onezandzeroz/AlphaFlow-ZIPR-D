@@ -44,6 +44,7 @@ import {
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { PageHeader } from '@/components/shared/page-header';
 import { useAccessErrorHandler } from '@/hooks/use-access-error-handler';
+import { useWriteAccessGuard } from '@/hooks/use-write-access-guard';
 import { MobileFilterDropdown } from '@/components/shared/mobile-filter-dropdown';
 import {
   FileText,
@@ -181,6 +182,7 @@ export function JournalEntriesPage({ user }: JournalEntriesPageProps) {
   const { language } = useTranslation();
   const isDanish = language === 'da';
   const { handleMutationError } = useAccessErrorHandler();
+  const { guardWriteAccess } = useWriteAccessGuard(user);
 
   // ─── State ──────────────────────────────────────────────────────────────
   const [entries, setEntries] = useState<JournalEntry[]>([]);
@@ -296,13 +298,15 @@ export function JournalEntriesPage({ user }: JournalEntriesPageProps) {
   // ─── Dialog Operations ──────────────────────────────────────────────────
 
   const openNewDialog = useCallback(() => {
-    setEditingEntry(null);
-    setFormDate(new Date().toISOString().split('T')[0]);
-    setFormDescription('');
-    setFormReference('');
-    setFormLines([createEmptyLine(), createEmptyLine()]);
-    setDialogOpen(true);
-  }, []);
+    guardWriteAccess(isDanish ? 'Opret postering' : 'Create journal entry', () => {
+      setEditingEntry(null);
+      setFormDate(new Date().toISOString().split('T')[0]);
+      setFormDescription('');
+      setFormReference('');
+      setFormLines([createEmptyLine(), createEmptyLine()]);
+      setDialogOpen(true);
+    });
+  }, [guardWriteAccess, isDanish]);
 
   const openEditDialog = useCallback((entry: JournalEntry) => {
     setEditingEntry(entry);

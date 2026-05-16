@@ -48,6 +48,7 @@ import {
 } from 'lucide-react';
 import JSZip from 'jszip';
 import { PageHeader } from '@/components/shared/page-header';
+import { useWriteAccessGuard } from '@/hooks/use-write-access-guard';
 import { format, formatDistanceToNow } from 'date-fns';
 
 interface BackupEntry {
@@ -167,6 +168,8 @@ export function BackupPage({ user }: BackupPageProps) {
   const isTenantOwner = user.activeCompanyRole === 'OWNER' || user.isSuperDev;
   // isAppOwner: true if user is the SuperDev / app owner
   const isAppOwner = user.isSuperDev === true;
+
+  const { guardWriteAccess } = useWriteAccessGuard(user);
 
   // Refetch interval (60s) — keeps backup list and stats in sync with automatic backups
   const POLL_INTERVAL_MS = 60_000;
@@ -609,7 +612,7 @@ export function BackupPage({ user }: BackupPageProps) {
           : 'Automated data backups compliant with §15 of the Danish Bookkeeping Act'}
         action={
           <Button
-            onClick={handleCreateBackup}
+            onClick={() => guardWriteAccess(language === 'da' ? 'Opret backup' : 'Create backup', handleCreateBackup)}
             disabled={isCreating}
             className="bg-[#0d9488] hover:bg-[#0f766e] text-white border border-[#0d9488] gap-2 font-medium transition-all lg:bg-white/20 lg:hover:bg-white/30 lg:border-white/30 lg:backdrop-blur-sm"
           >
@@ -1707,7 +1710,7 @@ export function BackupPage({ user }: BackupPageProps) {
                   : 'Create your first backup to secure your accounting data in compliance with regulations.'}
               </p>
               <Button
-                onClick={handleCreateBackup}
+                onClick={() => guardWriteAccess(language === 'da' ? 'Opret backup' : 'Create backup', handleCreateBackup)}
                 disabled={isCreating}
                 className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
               >

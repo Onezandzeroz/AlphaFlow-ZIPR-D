@@ -45,6 +45,7 @@ import {
   CalendarDays,
 } from 'lucide-react';
 import { PageHeader } from '@/components/shared/page-header';
+import { useWriteAccessGuard } from '@/hooks/use-write-access-guard';
 import { format, formatDistanceToNow } from 'date-fns';
 import { da, enGB } from 'date-fns/locale';
 
@@ -87,6 +88,7 @@ function formatLockedDate(dateStr: string, language: 'da' | 'en'): string {
 export function FiscalPeriodsPage({ user }: FiscalPeriodsPageProps) {
   const { language } = useTranslation();
   const isDanish = language === 'da';
+  const { guardWriteAccess } = useWriteAccessGuard(user);
 
   // State
   const [periods, setPeriods] = useState<FiscalPeriod[]>([]);
@@ -322,7 +324,7 @@ export function FiscalPeriodsPage({ user }: FiscalPeriodsPageProps) {
 
         {/* Create Year Button */}
         <Button
-          onClick={handleCreateYear}
+          onClick={() => guardWriteAccess(isDanish ? 'Opret regnskabsår' : 'Create fiscal year', handleCreateYear)}
           disabled={isCreatingYear || yearSummary.total === 12}
           className="w-full sm:w-auto bg-[#0d9488] hover:bg-[#0f766e] text-white font-medium gap-2 shadow-lg shadow-[#0d9488]/20 transition-all"
         >
@@ -531,7 +533,7 @@ export function FiscalPeriodsPage({ user }: FiscalPeriodsPageProps) {
                   : `Create fiscal periods for ${selectedYear} to post journal entries and lock periods in compliance with the Bookkeeping Act.`}
               </p>
               <Button
-                onClick={handleCreateYear}
+                onClick={() => guardWriteAccess(isDanish ? 'Opret regnskabsår' : 'Create fiscal year', handleCreateYear)}
                 disabled={isCreatingYear}
                 className="bg-[#0d9488] hover:bg-[#0f766e] text-white font-medium gap-2 shadow-lg shadow-[#0d9488]/20"
               >

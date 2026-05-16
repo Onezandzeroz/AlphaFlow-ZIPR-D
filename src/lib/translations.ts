@@ -130,6 +130,10 @@ export const translations = {
     da: 'Opret faktura',
     en: 'Create Invoice',
   },
+  createContact: {
+    da: 'Opret kontakt',
+    en: 'Create Contact',
+  },
   selectExpenseAccount: {
     da: 'Vælg konto fra kontoplan',
     en: 'Select account from chart of accounts',

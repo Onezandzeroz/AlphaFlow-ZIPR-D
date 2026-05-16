@@ -5,6 +5,7 @@ import { User } from '@/lib/auth-store';
 import { useTranslation } from '@/lib/use-translation';
 import { toast } from 'sonner';
 import { useAccessErrorHandler } from '@/hooks/use-access-error-handler';
+import { useWriteAccessGuard } from '@/hooks/use-write-access-guard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -294,6 +295,7 @@ export function ChartOfAccountsPage({ user, onNavigate }: ChartOfAccountsPagePro
   const { language } = useTranslation();
   const isDanish = language === 'da';
   const { handleMutationError } = useAccessErrorHandler();
+  const { guardWriteAccess } = useWriteAccessGuard(user);
 
   // ─── State ──────────────────────────────────────────────────────────────
 
@@ -431,9 +433,11 @@ export function ChartOfAccountsPage({ user, onNavigate }: ChartOfAccountsPagePro
   // ─── Form Handling ─────────────────────────────────────────────────────
 
   const openAddDialog = () => {
-    setFormData(EMPTY_FORM);
-    setFormErrors({});
-    setShowAddDialog(true);
+    guardWriteAccess(isDanish ? 'Opret konto' : 'Create account', () => {
+      setFormData(EMPTY_FORM);
+      setFormErrors({});
+      setShowAddDialog(true);
+    });
   };
 
   const openEditDialog = (account: Account) => {

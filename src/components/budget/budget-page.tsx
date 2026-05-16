@@ -35,6 +35,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { PageHeader } from '@/components/shared/page-header';
+import { useWriteAccessGuard } from '@/hooks/use-write-access-guard';
 import {
   Target,
   Plus,
@@ -225,6 +226,7 @@ function createEmptyFormEntry(): BudgetFormEntry {
 export function BudgetPage({ user }: { user: User }) {
   const { t, tc, language } = useTranslation();
   const isDa = language === 'da';
+  const { guardWriteAccess } = useWriteAccessGuard(user);
 
   // ── State ──
   const [budgets, setBudgets] = useState<BudgetListItem[]>([]);
@@ -578,7 +580,7 @@ export function BudgetPage({ user }: { user: User }) {
           : 'Budgets and variance analysis for your business'}
         action={
           <Button
-            onClick={handleOpenCreate}
+            onClick={() => guardWriteAccess(isDa ? 'Opret budget' : 'Create budget', handleOpenCreate)}
             className="bg-[#0d9488] hover:bg-[#0f766e] text-white border border-[#0d9488] gap-2 font-medium transition-all lg:bg-white/20 lg:hover:bg-white/30 lg:border-white/30 lg:backdrop-blur-sm"
           >
             <Plus className="h-4 w-4" />
@@ -624,7 +626,7 @@ export function BudgetPage({ user }: { user: User }) {
                 ? 'Opret dit første budget for at planlægge og sammenligne dine økonomiske mål med faktiske tal.'
                 : 'Create your first budget to plan and compare your financial goals with actual figures.'}
             </p>
-            <Button onClick={handleOpenCreate} className="gap-2 bg-[#0d9488] hover:bg-[#0f766e] text-white">
+            <Button onClick={() => guardWriteAccess(isDa ? 'Opret budget' : 'Create budget', handleOpenCreate)} className="gap-2 bg-[#0d9488] hover:bg-[#0f766e] text-white">
               <Plus className="h-4 w-4" />
               {isDa ? 'Opret budget' : 'Create Budget'}
             </Button>
@@ -1175,7 +1177,7 @@ export function BudgetPage({ user }: { user: User }) {
               {isDa ? 'Annuller' : 'Cancel'}
             </Button>
             <Button
-              onClick={handleCreate}
+              onClick={() => guardWriteAccess(isDa ? 'Opret budget' : 'Create budget', handleCreate)}
               disabled={saving || !formName.trim() || !formYear}
               className="bg-[#0d9488] hover:bg-[#0f766e] text-white gap-2"
             >
