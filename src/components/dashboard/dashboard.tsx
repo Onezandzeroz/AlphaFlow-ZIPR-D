@@ -12,11 +12,10 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+
 } from '@/components/ui/dialog';
-import { AddTransactionForm } from '@/components/transaction/add-transaction-form';
+
 import {
-  Plus,
   Calculator,
   TrendingUp,
   TrendingDown,
@@ -177,7 +176,7 @@ const COLORS = ['#0d9488', '#7c9a82', '#d4915c', '#6366f1', '#c9928f', '#7dabb5'
 export function Dashboard({ user, onNavigate, onboardingStepJustDone, onOnboardingStepDoneConsumed }: DashboardProps) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
   const { t, tc, td, tm, language } = useTranslation();
 
   // Double-entry state
@@ -395,10 +394,7 @@ export function Dashboard({ user, onNavigate, onboardingStepJustDone, onOnboardi
     fetchAllData();
   }, [fetchAllData]);
 
-  const handleAddTransaction = useCallback(() => {
-    setIsDialogOpen(false);
-    fetchAllData();
-  }, [fetchAllData]);
+
 
   const handleLoadDemoData = async () => {
     setIsSeeding(true);
@@ -996,12 +992,6 @@ export function Dashboard({ user, onNavigate, onboardingStepJustDone, onOnboardi
 
   const WidgetPicker = () => (
     <Dialog open={widgetPickerOpen} onOpenChange={setWidgetPickerOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="gap-1.5 text-white/80 hover:text-white hover:bg-white/10 text-xs font-medium">
-          <Settings2 className="h-3.5 w-3.5" />
-          {language === 'da' ? 'Tilpas' : 'Customize'}
-        </Button>
-      </DialogTrigger>
       <DialogContent className="bg-white dark:bg-[#1a1f1e] max-w-md max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="dark:text-white flex items-center gap-2">
@@ -1340,36 +1330,20 @@ export function Dashboard({ user, onNavigate, onboardingStepJustDone, onOnboardi
           ? `Regnskabsoversigt for ${tm(new Date())}`
           : `Accounting overview for ${tm(new Date())}`
         }
-        action={
-          <div className="flex items-center gap-1.5">
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-[#0d9488] hover:bg-[#0f766e] text-white border border-[#0d9488] gap-2 transition-all duration-200 lg:bg-white/20 lg:hover:bg-white/30 lg:border-white/30 lg:backdrop-blur-sm">
-                  <Plus className="h-4 w-4" />
-                  {t('addTransaction')}
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="bg-white dark:bg-[#1a1f1e] max-w-md max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle className="dark:text-white flex items-center gap-2">
-                    <Plus className="h-5 w-5 text-[#0d9488]" />
-                    {t('addTransaction')}
-                  </DialogTitle>
-                  <DialogDescription className="dark:text-gray-400">
-                    {t('recordNewTransaction')}
-                  </DialogDescription>
-                </DialogHeader>
-                <AddTransactionForm onSuccess={handleAddTransaction} />
-              </DialogContent>
-            </Dialog>
-            <WidgetPicker />
-          </div>
-        }
       />
 
-      {/* ─── Date Range Filter ────────────────────────────────── */}
-      <div>
+      {/* ─── Date Range Filter + Customize ──────────────────────── */}
+      <div className="flex items-center justify-between gap-3">
         <DateRangeFilter value={dateRange} onChange={setDateRange} />
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setWidgetPickerOpen(true)}
+          className="gap-1.5 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 text-xs font-medium shrink-0"
+        >
+          <Settings2 className="h-3.5 w-3.5" />
+          {language === 'da' ? 'Tilpas' : 'Customize'}
+        </Button>
       </div>
 
       {/* Demo Mode Banner */}
@@ -1963,11 +1937,7 @@ export function Dashboard({ user, onNavigate, onboardingStepJustDone, onOnboardi
                     <button
                       key={action.key}
                       onClick={() => {
-                        if (action.key === 'transactions') {
-                          setIsDialogOpen(true);
-                        } else {
-                          onNavigate?.(action.key);
-                        }
+                        onNavigate?.(action.key);
                       }}
                       className={`relative flex items-center gap-3 p-4 sm:p-5 min-h-[80px] rounded-2xl sm:rounded-xl
                         bg-gradient-to-br ${action.bgColor}

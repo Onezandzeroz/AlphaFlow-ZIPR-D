@@ -58,10 +58,10 @@ export function PageHeader({
       <div className="hidden lg:block relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0d9488] via-[#14b8a6] to-[#5eead4] dark:from-[#0f766e] dark:via-[#0d6058] dark:to-[#0d9488] p-5 sm:p-7 lg:p-8">
         {/* Decorative dot pattern */}
         <div
-          className="absolute inset-0 opacity-[0.07]"
+          className="absolute inset-0 opacity-[0.25]"
           style={{
             backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)',
-            backgroundSize: '24px 24px',
+            backgroundSize: '20px 20px',
           }}
         />
         {/* Decorative blur circles */}
