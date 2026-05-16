@@ -1332,6 +1332,8 @@ export function Dashboard({ user, onNavigate, onboardingStepJustDone, onOnboardi
       {/* ─── Main Dashboard (hidden during onboarding) ─── */}
       {!isEmptyState && (
       <>
+      {/* Banner hidden when pricing widget is shown so it sits at the very top */}
+      {!showSubscriptionWidget && (
       <PageHeader
         title={t('dashboard')}
         description={language === 'da'
@@ -1339,6 +1341,7 @@ export function Dashboard({ user, onNavigate, onboardingStepJustDone, onOnboardi
           : `Accounting overview for ${tm(new Date())}`
         }
       />
+      )}
 
       {/* ─── Subscription Plans Widget (shown when no .tbkey / write access) ─── */}
       {showSubscriptionWidget && (
