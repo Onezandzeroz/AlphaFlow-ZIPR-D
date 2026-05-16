@@ -1340,19 +1340,10 @@ export function Dashboard({ user, onNavigate, onboardingStepJustDone, onOnboardi
         }
       />
 
-      {/* ─── Date Range Filter + Customize ──────────────────────── */}
-      <div className="flex items-center justify-between gap-3">
-        <DateRangeFilter value={dateRange} onChange={setDateRange} />
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setWidgetPickerOpen(true)}
-          className="gap-1.5 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 text-xs font-medium shrink-0"
-        >
-          <Settings2 className="h-3.5 w-3.5" />
-          {language === 'da' ? 'Tilpas' : 'Customize'}
-        </Button>
-      </div>
+      {/* ─── Subscription Plans Widget (shown when no .tbkey / write access) ─── */}
+      {showSubscriptionWidget && (
+        <SubscriptionPlansWidget />
+      )}
 
       {/* Demo Mode Banner */}
       {demoModeEnabled && !isLoading && (
@@ -1382,14 +1373,23 @@ export function Dashboard({ user, onNavigate, onboardingStepJustDone, onOnboardi
         </div>
       )}
 
+      {/* ─── Date Range Filter + Customize (toolbar row) ──────────────── */}
+      <div className="flex items-center justify-end gap-1.5">
+        <DateRangeFilter value={dateRange} onChange={setDateRange} />
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setWidgetPickerOpen(true)}
+          className="gap-1.5 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 text-xs font-medium shrink-0 h-8 px-3"
+        >
+          <Settings2 className="h-3.5 w-3.5" />
+          {language === 'da' ? 'Tilpas' : 'Customize'}
+        </Button>
+      </div>
+
       {/* ═══════════════════════════════════════════════════════════
           MODE: Double-Entry Dashboard
           ═══════════════════════════════════════════════════════════ */}
-
-        {/* ─── Subscription Plans Widget (shown when no .tbkey / write access) ─── */}
-        {showSubscriptionWidget && (
-          <SubscriptionPlansWidget />
-        )}
 
         <div className="flex flex-col gap-4 lg:gap-6">
           {/* ─── KPI Stat Cards ──────────────────────────────── */}

@@ -1,14 +1,23 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { useLanguageStore } from '@/lib/language-store';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 import {
   Calendar,
   CalendarDays,
   CalendarRange,
   CalendarClock,
   Infinity,
+  ChevronDown,
+  Check,
 } from 'lucide-react';
 import {
   startOfMonth,
@@ -37,6 +46,7 @@ interface DateRangeFilterProps {
 export function DateRangeFilter({ value, onChange }: DateRangeFilterProps) {
   const { language } = useLanguageStore();
   const isDa = language === 'da';
+  const [open, setOpen] = useState(false);
 
   // ─── Predefined ranges ─────────────────────────────────────────
 
@@ -78,51 +88,76 @@ export function DateRangeFilter({ value, onChange }: DateRangeFilterProps) {
     ];
   }, [isDa]);
 
-  // ─── Active detection ──────────────────────────────────────────
+  // ─── Find the currently active option ──────────────────────────
 
-  const isActive = (key: string) => {
-    const opt = options.find((o) => o.key === key);
-    if (!opt) return false;
+  const activeOption = useMemo(() => {
+    return options.find((opt) => {
+      if (opt.range === null) return value === null;
+      if (!value) return false;
+      return (
+        value.from.getTime() === opt.range.from.getTime() &&
+        value.to.getTime() === opt.range.to.getTime()
+      );
+    });
+  }, [options, value]);
 
-    // "All Time" is active when value is null
-    if (opt.range === null) return value === null;
+  const ActiveIcon = activeOption?.icon ?? Calendar;
 
-    // Compare by timestamp
-    if (!value) return false;
-    return (
-      value.from.getTime() === opt.range.from.getTime() &&
-      value.to.getTime() === opt.range.to.getTime()
-    );
-  };
+  const handleSelect = useCallback((range: DateRange | null) => {
+    onChange(range);
+    setOpen(false);
+  }, [onChange]);
 
   // ─── Render ────────────────────────────────────────────────────
 
   return (
-    <div className="flex flex-wrap gap-2">
-      {options.map((opt) => {
-        const Icon = opt.icon;
-        const active = isActive(opt.key);
+    <DropdownMenu open={open} onOpenChange={setOpen}>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="gap-1.5 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 text-xs font-medium shrink-0 h-8 px-3"
+        >
+          <ActiveIcon className="h-3.5 w-3.5" />
+          <span>{activeOption?.label ?? (isDa ? 'Denne måned' : 'This Month')}</span>
+          <ChevronDown className={`h-3 w-3 opacity-50 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+        </Button>
+      </DropdownMenuTrigger>
 
-        return (
-          <Button
-            key={opt.key}
-            variant="ghost"
-            size="sm"
-            onClick={() => onChange(opt.range)}
-            className={`
-              h-8 px-3 gap-1.5 text-xs font-medium rounded-lg transition-all duration-200
-              ${
-                active
-                  ? 'bg-[#0d9488] text-white dark:bg-[#2dd4bf] dark:text-gray-900 shadow-sm hover:bg-[#0d9488]/90 dark:hover:bg-[#2dd4bf]/90'
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
-              }
-            `}
-          >
-            <Icon className="h-3.5 w-3.5" />
-            <span>{opt.label}</span>
-          </Button>
-        );
-      })}
-    </div>
+      <DropdownMenuContent
+        align="end"
+        sideOffset={4}
+        className="w-52 rounded-xl p-1.5"
+      >
+        {options.map((opt, idx) => {
+          const Icon = opt.icon;
+          const isActive = activeOption?.key === opt.key;
+
+          return (
+            <div key={opt.key}>
+              {idx === 4 && (
+                <DropdownMenuSeparator className="my-1" />
+              )}
+              <DropdownMenuItem
+                onClick={() => handleSelect(opt.range)}
+                className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg cursor-pointer transition-colors ${
+                  isActive
+                    ? 'bg-[#0d9488]/10 dark:bg-[#2dd4bf]/10'
+                    : ''
+                }`}
+              >
+                <Icon className={`h-4 w-4 shrink-0 ${isActive ? 'text-[#0d9488] dark:text-[#2dd4bf]' : 'text-gray-400 dark:text-gray-500'}`} />
+                <span className={`text-sm flex-1 ${isActive ? 'font-semibold text-[#0d9488] dark:text-[#2dd4bf]' : 'text-gray-700 dark:text-gray-300'}`}>
+                  {opt.label}
+                </span>
+                {isActive && (
+                  <Check className="h-3.5 w-3.5 text-[#0d9488] dark:text-[#2dd4bf]" />
+                )}
+              </DropdownMenuItem>
+            </div>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
