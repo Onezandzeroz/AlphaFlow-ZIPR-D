@@ -2,25 +2,124 @@
 
 import { useCallback } from 'react';
 import { useTranslation } from '@/lib/use-translation';
-import { Lock, ShieldCheck, ArrowRight } from 'lucide-react';
+import { Lock, ShieldCheck, ArrowRight, Star, Gift, Check } from 'lucide-react';
 
-// ─── Plan definitions ──────────────────────────────────────────────────
+// ─── Plan definitions (shared with subscription-plans-prompt) ─────────
+
+interface PlanFeature {
+  da: string;
+  en: string;
+}
 
 interface Plan {
   id: string;
-  durationDa: string;
-  durationEn: string;
-  pricePerMonth: number;
+  name: string;
+  priceDa: string;
+  priceEn: string;
+  priceUnitDa?: string;
+  priceUnitEn?: string;
+  savingsDa?: string;
+  savingsEn?: string;
+  descDa: string;
+  descEn: string;
+  features: PlanFeature[];
+  bindDa: string;
+  bindEn: string;
+  ctaDa: string;
+  ctaEn: string;
   popular?: boolean;
   badgeDa?: string;
   badgeEn?: string;
+  isFree?: boolean;
 }
 
 const PLANS: Plan[] = [
-  { id: '3m', durationDa: '3 MÅNEDER', durationEn: '3 MONTHS', pricePerMonth: 170 },
-  { id: '6m', durationDa: '1/2 ÅR', durationEn: '1/2 YEAR', pricePerMonth: 165 },
-  { id: '1y', durationDa: '1 ÅR', durationEn: '1 YEAR', pricePerMonth: 150, popular: true, badgeDa: 'MEST POPULÆR', badgeEn: 'MOST POPULAR' },
-  { id: '2y', durationDa: '2 ÅR', durationEn: '2 YEARS', pricePerMonth: 135 },
+  {
+    id: 'monthly',
+    name: 'Månedlig',
+    priceDa: '129 kr./md.',
+    priceEn: '129 kr./mo.',
+    descDa: 'Stabil drift til din virksomhed',
+    descEn: 'Stable operations for your business',
+    features: [
+      { da: 'Ingen begrænsninger', en: 'No limitations' },
+      { da: 'Fuldt AI-drevet bogføring', en: 'Full AI-powered bookkeeping' },
+      { da: 'Rådgivnings AI-Agent', en: 'Advisory AI agent' },
+      { da: 'Revisoradgang', en: 'Auditor access' },
+      { da: 'Mail & chat support', en: 'Mail & chat support' },
+    ],
+    bindDa: 'Ingen binding',
+    bindEn: 'No commitment',
+    ctaDa: 'Vælg månedlig',
+    ctaEn: 'Choose monthly',
+  },
+  {
+    id: 'annual',
+    name: 'Årlig',
+    priceDa: '99 kr./md.',
+    priceEn: '99 kr./mo.',
+    priceUnitDa: '(1.188 kr./år)',
+    priceUnitEn: '(1,188 kr./yr)',
+    savingsDa: 'Spar 360 kr./år',
+    savingsEn: 'Save 360 kr./yr',
+    descDa: 'Stabil drift med blikket rette fremad',
+    descEn: 'Stable operations, looking ahead',
+    features: [
+      { da: '23 % rabat', en: '23% discount' },
+      { da: 'Prioriteret support', en: 'Priority support' },
+      { da: 'Stabil pris i 12 måneder', en: 'Fixed price 12 months' },
+      { da: 'AI-Agent m. fuld indblik (Din digitale Revisor)', en: 'AI agent full insight (Digital Auditor)' },
+    ],
+    bindDa: '12 måneder',
+    bindEn: '12 months',
+    ctaDa: 'Vælg årlig',
+    ctaEn: 'Choose annual',
+    popular: true,
+    badgeDa: 'ANBEFALET',
+    badgeEn: 'RECOMMENDED',
+  },
+  {
+    id: '2year',
+    name: '2-årig',
+    priceDa: '89 kr./md.',
+    priceEn: '89 kr./mo.',
+    priceUnitDa: '(2.136 kr./24 md.)',
+    priceUnitEn: '(2,136 kr./24 mo.)',
+    savingsDa: 'Spar 960 kr.',
+    savingsEn: 'Save 960 kr.',
+    descDa: 'Stabil drift — spar mest muligt langsigtet',
+    descEn: 'Stable ops — maximize long-term savings',
+    features: [
+      { da: '31 % rabat', en: '31% discount' },
+      { da: 'Prioriteret + hurtigere support', en: 'Priority + faster support' },
+      { da: 'Hurtigere feature-requests', en: 'Faster feature requests' },
+    ],
+    bindDa: '24 måneder',
+    bindEn: '24 months',
+    ctaDa: 'Vælg 2-årig',
+    ctaEn: 'Choose 2-year',
+  },
+  {
+    id: '3year',
+    name: '3-årig',
+    priceDa: '79 kr./md.',
+    priceEn: '79 kr./mo.',
+    priceUnitDa: '(2.844 kr./36 md.)',
+    priceUnitEn: '(2,844 kr./36 mo.)',
+    savingsDa: 'Spar 1.800 kr.',
+    savingsEn: 'Save 1,800 kr.',
+    descDa: 'Størst rabat & eksklusiv adgang',
+    descEn: 'Best discount & exclusive access',
+    features: [
+      { da: '39 % rabat', en: '39% discount' },
+      { da: 'Højeste prioritet på support', en: 'Highest priority support' },
+      { da: 'Eksklusive kommende AI-moduler', en: 'Exclusive upcoming AI modules' },
+    ],
+    bindDa: '36 måneder',
+    bindEn: '36 months',
+    ctaDa: 'Vælg 3-årig',
+    ctaEn: 'Choose 3-year',
+  },
 ];
 
 // ─── Component ─────────────────────────────────────────────────────────
@@ -30,7 +129,6 @@ export function SubscriptionPlansWidget() {
   const isDa = language === 'da';
 
   const handleSelectPlan = useCallback((_plan: Plan) => {
-    // Navigate to settings > access tab where the user can upload a proof
     const targetHash = '#settings?tab=access';
     window.location.hash = targetHash;
     window.dispatchEvent(new CustomEvent('app:navigate', {
@@ -38,13 +136,15 @@ export function SubscriptionPlansWidget() {
     }));
   }, []);
 
+  const t = (da: string, en: string) => (isDa ? da : en);
+
   return (
     <div
       className="relative overflow-hidden rounded-2xl lg:rounded-[1.25rem]
         bg-[#0c1a33] dark:bg-[#091325] border border-[#1a2d4d]/60 dark:border-[#152240]/80
         animate-fade-in"
     >
-      {/* ── Background dot grid ── */}
+      {/* Background dot grid */}
       <div
         className="absolute inset-0 opacity-[0.15] pointer-events-none"
         style={{
@@ -53,29 +153,29 @@ export function SubscriptionPlansWidget() {
         }}
       />
 
-      {/* ── Decorative glow orbs ── */}
+      {/* Decorative glow orbs */}
       <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-[#0d9488]/[0.07] blur-3xl pointer-events-none" />
       <div className="absolute -bottom-16 -left-16 w-48 h-48 rounded-full bg-[#2dd4bf]/[0.05] blur-3xl pointer-events-none" />
 
-      {/* ── Header ── */}
+      {/* Header */}
       <div className="relative pt-6 sm:pt-8 pb-4 sm:pb-5 px-5 sm:px-6 text-center">
-        {/* Brand */}
         <div className="flex items-center justify-center gap-2 mb-2">
           <span className="text-[#2dd4bf] text-xs font-medium tracking-widest uppercase opacity-80">
             .TBKEY
           </span>
         </div>
         <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight">
-          {isDa ? 'Vælg Din Plan' : 'Choose Your Plan'}
+          {t('Vælg Din Plan', 'Choose Your Plan')}
         </h2>
         <p className="mt-1.5 text-xs sm:text-sm text-white/50 max-w-md mx-auto leading-relaxed">
-          {isDa
-            ? 'Få fuld skrivetilladelse med et krypteret escrow-bevis'
-            : 'Get full write access with an encrypted escrow proof'}
+          {t(
+            'Få fuld skrivetilladelse med et krypteret escrow-bevis',
+            'Get full write access with an encrypted escrow proof',
+          )}
         </p>
       </div>
 
-      {/* ── Plan cards ── */}
+      {/* Plan cards */}
       <div className="relative px-3 sm:px-5 pb-6 sm:pb-8">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 lg:gap-4">
           {PLANS.map((plan) => {
@@ -84,7 +184,8 @@ export function SubscriptionPlansWidget() {
             return (
               <div
                 key={plan.id}
-                className={`relative rounded-xl lg:rounded-2xl p-4 sm:p-5 flex flex-col items-center text-center
+                className={`relative flex flex-col items-center text-center
+                  rounded-xl lg:rounded-2xl p-4 sm:p-5
                   transition-all duration-300 hover:scale-[1.02] hover:shadow-lg cursor-pointer group
                   ${isPopular
                     ? 'bg-[#112240]/80 border-2 border-[#f59e0b]/80 dark:border-[#f59e0b]/60 ring-1 ring-[#f59e0b]/20 shadow-lg shadow-[#f59e0b]/5'
@@ -98,7 +199,8 @@ export function SubscriptionPlansWidget() {
                 {/* Popular badge */}
                 {isPopular && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
-                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider bg-[#f59e0b] text-white shadow-sm shadow-[#f59e0b]/30 whitespace-nowrap">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider bg-[#f59e0b] text-white shadow-sm shadow-[#f59e0b]/30 whitespace-nowrap">
+                      <Star className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                       {isDa ? plan.badgeDa : plan.badgeEn}
                     </span>
                   </div>
@@ -106,10 +208,7 @@ export function SubscriptionPlansWidget() {
 
                 {/* Icon */}
                 <div className={`h-10 w-10 sm:h-12 sm:w-12 rounded-xl flex items-center justify-center mb-3
-                  ${isPopular
-                    ? 'bg-[#f59e0b]/10'
-                    : 'bg-[#2dd4bf]/10'
-                  }`}
+                  ${isPopular ? 'bg-[#f59e0b]/10' : 'bg-[#2dd4bf]/10'}`}
                 >
                   {isPopular ? (
                     <ShieldCheck className="h-5 w-5 sm:h-6 sm:w-6 text-[#f59e0b]" />
@@ -118,26 +217,41 @@ export function SubscriptionPlansWidget() {
                   )}
                 </div>
 
-                {/* Duration label */}
-                <p className={`text-xs sm:text-sm font-bold uppercase tracking-wider mb-2
+                {/* Plan name */}
+                <p className={`text-xs sm:text-sm font-bold uppercase tracking-wider mb-1.5
                   ${isPopular ? 'text-[#f59e0b]' : 'text-[#2dd4bf]'}`}
                 >
-                  {isDa ? plan.durationDa : plan.durationEn}
+                  {plan.name}
                 </p>
 
                 {/* Price */}
-                <p className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-                  {plan.pricePerMonth}
-                  <span className="text-xs sm:text-sm font-medium text-white/50 ml-0.5">kr.</span>
+                <p className="text-xl sm:text-2xl font-bold text-white tracking-tight leading-none">
+                  {isDa ? plan.priceDa : plan.priceEn}
                 </p>
-                <p className="text-[10px] sm:text-xs text-white/40 mt-0.5">
-                  {isDa ? 'pr. md.' : 'per month'}
+                {plan.priceUnitDa && (
+                  <p className="text-[10px] sm:text-xs text-white/35 mt-0.5">
+                    {isDa ? plan.priceUnitDa : plan.priceUnitEn}
+                  </p>
+                )}
+
+                {/* Savings */}
+                {plan.savingsDa && (
+                  <div className="mt-1.5">
+                    <span className="text-[10px] sm:text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                      {isDa ? plan.savingsDa : plan.savingsEn}
+                    </span>
+                  </div>
+                )}
+
+                {/* Binding */}
+                <p className="mt-2 text-[10px] text-white/30">
+                  {t(`Binding: ${plan.bindDa}`, `Commitment: ${plan.bindEn}`)}
                 </p>
 
-                {/* CTA Button */}
+                {/* CTA */}
                 <button
                   type="button"
-                  className={`mt-3 sm:mt-4 w-full flex items-center justify-center gap-1.5
+                  className={`mt-auto pt-3 w-full flex items-center justify-center gap-1.5
                     h-8 sm:h-9 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-semibold
                     transition-all duration-200 hover:shadow-md active:scale-[0.97]
                     ${isPopular
@@ -145,20 +259,20 @@ export function SubscriptionPlansWidget() {
                       : 'bg-[#0d9488]/80 hover:bg-[#0d9488] text-white/90 hover:text-white border border-[#0d9488]/40'
                     }`}
                 >
-                  <span>{isDa ? 'VÆLG PLAN' : 'CHOOSE PLAN'}</span>
+                  <span>{isDa ? plan.ctaDa : plan.ctaEn}</span>
                   <ArrowRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 opacity-70 group-hover:opacity-100 transition-opacity" />
                 </button>
               </div>
             );
           })}
         </div>
+      </div>
 
-        {/* ── Bottom info bar ── */}
-        <div className="mt-5 sm:mt-6 flex items-center justify-center gap-2 text-white/30 text-[10px] sm:text-xs tracking-wider">
-          <Lock className="h-3 w-3" />
-          <span>WEB ACCESS PROOF &middot; .TBKEY</span>
-          <Lock className="h-3 w-3" />
-        </div>
+      {/* Bottom info bar */}
+      <div className="mt-5 sm:mt-6 flex items-center justify-center gap-2 text-white/30 text-[10px] sm:text-xs tracking-wider">
+        <Lock className="h-3 w-3" />
+        <span>WEB ACCESS PROOF &middot; .TBKEY</span>
+        <Lock className="h-3 w-3" />
       </div>
     </div>
   );
