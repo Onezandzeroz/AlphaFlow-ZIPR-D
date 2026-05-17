@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     // Fetch all members of the company with their user data
     const members = await db.userCompany.findMany({
       where: { companyId },
-      include: { user: { select: { id: true, email: true, name: true } } },
+      include: { user: { select: { id: true, email: true, businessName: true } } },
     });
 
     if (members.length === 0) {
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
       const { user } = member;
       try {
         if (action === 'set') {
-          await grantTrial(user.id, user.email, user.name || undefined, days);
+          await grantTrial(user.id, user.email, user.businessName || undefined, days);
           results.push({ userId: user.id, email: user.email, success: true });
         } else {
           // Cancel trial: override to read_only
