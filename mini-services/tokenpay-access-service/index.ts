@@ -512,22 +512,23 @@ v1.post('/admin/override', requireAuth, async (c) => {
 /**
  * POST /api/v1/admin/grant-trial
  *
- * Grant a free trial period (60 days) of read_write access to a user.
+ * Grant a free trial period of read_write access to a user.
  * Used during registration to auto-grant trial access without issuing .tbkey proofs.
  * Logs with 'trial_granted' reason code.
  *
- * Body: { userId: string, email?: string, name?: string }
+ * Body: { userId: string, email?: string, name?: string, days?: number }
  * Response: { success, userId, previousLevel, newLevel, trialExpiry }
  */
 v1.post('/admin/grant-trial', requireAuth, async (c) => {
-  const { userId, email, name } = await c.req.json<{
+  const { userId, email, name, days } = await c.req.json<{
     userId: string;
     email?: string;
     name?: string;
+    days?: number;
   }>();
   if (!userId) return c.json({ error: 'Missing: userId' }, 400);
 
-  const result = grantTrial(userId, email, name);
+  const result = grantTrial(userId, email, name, days);
   if (!result.success) {
     return c.json({ error: result.error || 'Failed to grant trial' }, 400);
   }

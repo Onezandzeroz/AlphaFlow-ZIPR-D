@@ -407,16 +407,18 @@ export type GrantTrialResult = {
 
 /**
  * Grant a free trial period to a user.
- * Sets access_level to read_write with a TRIAL_DURATION_DAYS expiry.
+ * Sets access_level to read_write with an expiry of `days` days (default TRIAL_DURATION_DAYS).
  * Logs with 'trial_granted' reason code.
  * If the user already has read_write access (e.g., via a proof), this is a no-op.
  */
-export function grantTrial(userId: string, email?: string, name?: string): GrantTrialResult {
+export function grantTrial(userId: string, email?: string, name?: string, days?: number): GrantTrialResult {
   // Ensure user exists — auto-create if this is their first interaction
   let user = getUserById(userId);
   if (!user) {
     user = findOrCreateUserById(userId, email, name);
   }
+
+  const duration = days ?? TRIAL_DURATION_DAYS;
 
   // Already has read_write access — skip (don't overwrite a proof-based grant)
   if (user.access_level === GRANTED_ACCESS_LEVEL && user.access_expiry) {
@@ -431,7 +433,7 @@ export function grantTrial(userId: string, email?: string, name?: string): Grant
 
   const previousLevel = user.access_level;
   const trialExpiry = new Date();
-  trialExpiry.setDate(trialExpiry.getDate() + TRIAL_DURATION_DAYS);
+  trialExpiry.setDate(trialExpiry.getDate() + duration);
   const trialExpiryISO = trialExpiry.toISOString();
 
   updateUserAccess(userId, GRANTED_ACCESS_LEVEL, trialExpiryISO);

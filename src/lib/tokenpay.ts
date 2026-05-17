@@ -478,11 +478,13 @@ export const tokenpay = {
 // Turbopack's type checker may truncate types on large object literals.
 
 /**
- * Grant a free trial period (60 days) of read_write access.
+ * Grant a free trial period of read_write access.
  * Used during registration to auto-grant trial access without .tbkey proofs.
  * Logs with 'trial_granted' reason code.
+ *
+ * @param days - Trial duration in days (default: 60)
  */
-export async function grantTrial(userId: string, email?: string, name?: string): Promise<{
+export async function grantTrial(userId: string, email?: string, name?: string, days?: number): Promise<{
   success: boolean;
   userId: string;
   previousLevel: AccessLevel;
@@ -491,7 +493,7 @@ export async function grantTrial(userId: string, email?: string, name?: string):
 }> {
   return apiFetch('admin/grant-trial', {
     method: 'POST',
-    body: JSON.stringify({ userId, email, name }),
+    body: JSON.stringify({ userId, email, name, days }),
   });
 }
 

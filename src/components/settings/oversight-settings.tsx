@@ -14,8 +14,28 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Shield, Eye, Search, Building2, Users, AlertTriangle, X, Loader2, ChevronRight, Crown } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Shield, Eye, Search, Building2, Users, AlertTriangle, X, Loader2,
+  ChevronRight, Crown, Clock, MoreVertical, Play, Ban, Timer,
+} from 'lucide-react';
 import { toast } from 'sonner';
+import { format, formatDistanceToNow } from 'date-fns';
+import { da } from 'date-fns/locale';
+
+// ─── Types ──────────────────────────────────────────────────────────────
+
+interface TrialInfo {
+  isActive: boolean;
+  earliestExpiry: string | null;
+  activeMembers: number;
+}
 
 interface Tenant {
   id: string;
@@ -27,7 +47,10 @@ interface Tenant {
   isActive: boolean;
   memberCount: number;
   createdAt: string;
+  trial: TrialInfo;
 }
+
+// ─── Component ──────────────────────────────────────────────────────────
 
 export function OversightSettings() {
   const user = useAuthStore(state => state.user);
@@ -35,6 +58,7 @@ export function OversightSettings() {
   const startOversight = useAuthStore(state => state.startOversight);
   const stopOversight = useAuthStore(state => state.stopOversight);
   const { language } = useTranslation();
+  const isDa = language === 'da';
 
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,6 +68,7 @@ export function OversightSettings() {
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
   const [promoting, setPromoting] = useState(false);
   const [promoteConfirmOpen, setPromoteConfirmOpen] = useState(false);
+  const [trialLoading, setTrialLoading] = useState<string | null>(null);
 
   const isSuperDev = user?.isSuperDev ?? false;
   const isOversightMode = user?.isOversightMode ?? false;
@@ -57,10 +82,13 @@ export function OversightSettings() {
       const res = await fetch(`/api/oversight/tenants?${params}`);
       if (res.ok) {
         const data = await res.json();
-        const rawTenants = data.tenants || [];
+        const rawTenants: Tenant[] = (data.tenants || []).map((t: Tenant) => ({
+          ...t,
+          trial: t.trial ?? { isActive: false, earliestExpiry: null, activeMembers: 0 },
+        }));
         // Pin AlphaAi (AppOwner) company to top
-        const alphaAiTenants = rawTenants.filter((t: Tenant) => t.name.startsWith('AlphaAi'));
-        const otherTenants = rawTenants.filter((t: Tenant) => !t.name.startsWith('AlphaAi'));
+        const alphaAiTenants = rawTenants.filter((t) => t.name.startsWith('AlphaAi'));
+        const otherTenants = rawTenants.filter((t) => !t.name.startsWith('AlphaAi'));
         setTenants([...alphaAiTenants, ...otherTenants]);
       }
     } catch {
@@ -79,6 +107,50 @@ export function OversightSettings() {
     }
   }, [isSuperDev, fetchTenants]);
 
+  // ─── Trial management ────────────────────────────────────────
+
+  const handleTrialAction = async (tenant: Tenant, action: 'set' | 'cancel', days?: number) => {
+    setTrialLoading(tenant.id);
+    try {
+      const res = await fetch('/api/oversight/trial', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ companyId: tenant.id, action, days }),
+      });
+      const data = await res.json();
+
+      if (res.ok && data.failed === 0) {
+        const msg = action === 'set'
+          ? (isDa
+            ? `${days}-dages prøveperiode aktiveret for ${tenant.name}`
+            : `${days}-day trial activated for ${tenant.name}`)
+          : (isDa
+            ? `Prøveperiode annulleret for ${tenant.name}`
+            : `Trial cancelled for ${tenant.name}`);
+        toast.success(isDa ? 'Prøveperiode opdateret' : 'Trial updated', {
+          description: `${msg} (${data.succeeded} ${isDa ? 'medlemmer' : 'members'})`,
+        });
+        // Refresh tenant list to update trial indicators
+        await fetchTenants();
+      } else {
+        const failCount = data.failed ?? 0;
+        toast.error(
+          isDa ? 'Kunne ikke opdatere prøveperiode' : 'Failed to update trial',
+          { description: `${failCount} ${isDa ? 'fejlede' : 'failed'}${data.results?.[0]?.error ? `: ${data.results[0].error}` : ''}` },
+        );
+      }
+    } catch (error) {
+      toast.error(
+        isDa ? 'Kunne ikke opdatere prøveperiode' : 'Failed to update trial',
+        { description: error instanceof Error ? error.message : undefined },
+      );
+    } finally {
+      setTrialLoading(null);
+    }
+  };
+
+  // ─── Promote / Oversight handlers ─────────────────────────────
+
   const handlePromoteToSuperDev = async () => {
     setPromoting(true);
     try {
@@ -87,24 +159,23 @@ export function OversightSettings() {
 
       if (res.ok) {
         toast.success(
-          language === 'da' ? 'Forfremmet til App-ejer!' : 'Promoted to App Owner!',
+          isDa ? 'Forfremmet til App-ejer!' : 'Promoted to App Owner!',
           {
-            description: language === 'da'
+            description: isDa
               ? 'Log ud og ind igen for at aktivere tilsynsfunktionen'
               : 'Log out and back in to activate the oversight feature',
           }
         );
-        // Refresh auth state to pick up isSuperDev change
         await checkAuth();
       } else {
         toast.error(
-          language === 'da' ? 'Kunne ikke forfremme' : 'Failed to promote',
-          { description: data.error || (language === 'da' ? 'Ukendt fejl' : 'Unknown error') }
+          isDa ? 'Kunne ikke forfremme' : 'Failed to promote',
+          { description: data.error || (isDa ? 'Ukendt fejl' : 'Unknown error') }
         );
       }
     } catch (error) {
       toast.error(
-        language === 'da' ? 'Kunne ikke forfremme' : 'Failed to promote',
+        isDa ? 'Kunne ikke forfremme' : 'Failed to promote',
         { description: error instanceof Error ? error.message : undefined }
       );
     } finally {
@@ -118,14 +189,12 @@ export function OversightSettings() {
     try {
       await startOversight(tenant.id);
       toast.success(
-        language === 'da'
-          ? `Overvåger nu ${tenant.name}`
-          : `Now overseeing ${tenant.name}`,
-        { description: language === 'da' ? 'Alle data vises skrivebeskyttet' : 'All data shown in read-only mode' }
+        isDa ? `Overvåger nu ${tenant.name}` : `Now overseeing ${tenant.name}`,
+        { description: isDa ? 'Alle data vises skrivebeskyttet' : 'All data shown in read-only mode' }
       );
     } catch (error) {
       toast.error(
-        language === 'da' ? 'Kunne ikke starte overvågning' : 'Failed to start oversight',
+        isDa ? 'Kunne ikke starte overvågning' : 'Failed to start oversight',
         { description: error instanceof Error ? error.message : undefined }
       );
     } finally {
@@ -139,17 +208,27 @@ export function OversightSettings() {
     try {
       await stopOversight();
       toast.success(
-        language === 'da' ? 'Overvågning afsluttet' : 'Oversight ended',
-        { description: language === 'da' ? 'Tilbage til din egen virksomhed' : 'Back to your own company' }
+        isDa ? 'Overvågning afsluttet' : 'Oversight ended',
+        { description: isDa ? 'Tilbage til din egen virksomhed' : 'Back to your own company' }
       );
     } catch {
-      toast.error(language === 'da' ? 'Kunne ikke afslutte overvågning' : 'Failed to end oversight');
+      toast.error(isDa ? 'Kunne ikke afslutte overvågning' : 'Failed to end oversight');
     }
   };
 
+  // ─── Helpers ──────────────────────────────────────────────────
+
+  function formatTrialExpiry(iso: string): string {
+    try {
+      const date = new Date(iso);
+      const dist = formatDistanceToNow(date, { addSuffix: false, locale: isDa ? da : undefined });
+      return dist;
+    } catch {
+      return '';
+    }
+  }
+
   // ─── Non-SuperDev: Show promotion card (only for AlphaAi company) ──
-  // Non-AlphaAi users should never reach this component — the tab is hidden in settings-page.tsx.
-  // This is a safety net: return null if somehow rendered.
 
   if (!isSuperDev) {
     if (!isAlphaAiCompany) {
@@ -161,10 +240,10 @@ export function OversightSettings() {
         <div>
           <h3 className="text-lg font-semibold text-[#1a2e2a] dark:text-[#e2e8e6] flex items-center gap-2">
             <Shield className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-            {language === 'da' ? 'Tilsyn' : 'Oversight'}
+            {isDa ? 'Tilsyn' : 'Oversight'}
           </h3>
           <p className="text-sm text-[#6b7c75]">
-            {language === 'da'
+            {isDa
               ? 'AlphaAi App-ejer funktion — se alle virksomheder i skrivebeskyttet tilstand'
               : 'AlphaAi App Owner feature — view all companies in read-only mode'}
           </p>
@@ -174,10 +253,10 @@ export function OversightSettings() {
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2 text-amber-700 dark:text-amber-400">
               <Crown className="h-5 w-5" />
-              {language === 'da' ? 'Bliv AlphaAi App-ejer' : 'Become AlphaAi App Owner'}
+              {isDa ? 'Bliv AlphaAi App-ejer' : 'Become AlphaAi App Owner'}
             </CardTitle>
             <CardDescription>
-              {language === 'da'
+              {isDa
                 ? 'Som App-ejer får du skrivebeskyttet adgang til alle virksomheder i systemet (god mode)'
                 : 'As App Owner you get read-only access to all companies in the system (god mode)'}
             </CardDescription>
@@ -185,13 +264,13 @@ export function OversightSettings() {
           <CardContent className="space-y-4">
             <div className="rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 p-4 space-y-3">
               <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
-                {language === 'da' ? 'Hvad du får:' : 'What you get:'}
+                {isDa ? 'Hvad du får:' : 'What you get:'}
               </p>
               <ul className="space-y-2 text-sm text-amber-700 dark:text-amber-400">
                 <li className="flex items-start gap-2">
                   <Eye className="h-4 w-4 shrink-0 mt-0.5" />
                   <span>
-                    {language === 'da'
+                    {isDa
                       ? 'Skrivebeskyttet adgang til alle virksomheders data'
                       : 'Read-only access to all companies\' data'}
                   </span>
@@ -199,7 +278,7 @@ export function OversightSettings() {
                 <li className="flex items-start gap-2">
                   <Shield className="h-4 w-4 shrink-0 mt-0.5" />
                   <span>
-                    {language === 'da'
+                    {isDa
                       ? 'Alle ændringer er blokeret — kun læseadgang'
                       : 'All modifications are blocked — read-only access only'}
                   </span>
@@ -207,7 +286,7 @@ export function OversightSettings() {
                 <li className="flex items-start gap-2">
                   <Building2 className="h-4 w-4 shrink-0 mt-0.5" />
                   <span>
-                    {language === 'da'
+                    {isDa
                       ? 'Adgang logges i revisionslogen for gennemsigtighed'
                       : 'Access is logged in the audit trail for transparency'}
                   </span>
@@ -218,7 +297,7 @@ export function OversightSettings() {
             <div className="flex items-start gap-2 text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20 rounded-lg p-3">
               <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
               <p>
-                {language === 'da'
+                {isDa
                   ? 'Begrænset til én App-ejer pr. system. Når du er blevet forfremmet, kan ingen andre blive App-ejer.'
                   : 'Limited to one App Owner per system. Once promoted, no one else can become App Owner.'}
               </p>
@@ -229,7 +308,7 @@ export function OversightSettings() {
               className="w-full bg-amber-600 hover:bg-amber-700 text-white gap-2"
             >
               <Crown className="h-4 w-4" />
-              {language === 'da' ? 'Bliv App-ejer' : 'Become App Owner'}
+              {isDa ? 'Bliv App-ejer' : 'Become App Owner'}
             </Button>
           </CardContent>
         </Card>
@@ -240,10 +319,10 @@ export function OversightSettings() {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
                 <Crown className="h-5 w-5" />
-                {language === 'da' ? 'Bekræft App-ejer forfremmelse' : 'Confirm App Owner Promotion'}
+                {isDa ? 'Bekræft App-ejer forfremmelse' : 'Confirm App Owner Promotion'}
               </DialogTitle>
               <DialogDescription>
-                {language === 'da'
+                {isDa
                   ? 'Du er ved at blive forfremmet til AlphaAi App-ejer. Dette giver dig skrivebeskyttet adgang til alle virksomheder i systemet.'
                   : 'You are about to be promoted to AlphaAi App Owner. This grants you read-only access to all companies in the system.'}
               </DialogDescription>
@@ -252,12 +331,12 @@ export function OversightSettings() {
               <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
               <div>
                 <p className="font-medium mb-1">
-                  {language === 'da' ? 'Vigtigt:' : 'Important:'}
+                  {isDa ? 'Vigtigt:' : 'Important:'}
                 </p>
                 <ul className="list-disc pl-4 space-y-0.5">
-                  <li>{language === 'da' ? 'Kun én App-ejer kan eksistere ad gangen' : 'Only one App Owner can exist at a time'}</li>
-                  <li>{language === 'da' ? 'Al oversight-adgang logges i revisionslogen' : 'All oversight access is logged in the audit trail'}</li>
-                  <li>{language === 'da' ? 'Du skal logge ud og ind igen efter forfremmelse' : 'You must log out and back in after promotion'}</li>
+                  <li>{isDa ? 'Kun én App-ejer kan eksistere ad gangen' : 'Only one App Owner can exist at a time'}</li>
+                  <li>{isDa ? 'Al oversight-adgang logges i revisionslogen' : 'All oversight access is logged in the audit trail'}</li>
+                  <li>{isDa ? 'Du skal logge ud og ind igen efter forfremmelse' : 'You must log out and back in after promotion'}</li>
                 </ul>
               </div>
             </div>
@@ -267,7 +346,7 @@ export function OversightSettings() {
                 onClick={() => setPromoteConfirmOpen(false)}
                 className="flex-1"
               >
-                {language === 'da' ? 'Annuller' : 'Cancel'}
+                {isDa ? 'Annuller' : 'Cancel'}
               </Button>
               <Button
                 onClick={handlePromoteToSuperDev}
@@ -279,7 +358,7 @@ export function OversightSettings() {
                 ) : (
                   <Crown className="h-4 w-4" />
                 )}
-                {language === 'da' ? 'Bekræft forfremmelse' : 'Confirm Promotion'}
+                {isDa ? 'Bekræft forfremmelse' : 'Confirm Promotion'}
               </Button>
             </div>
           </DialogContent>
@@ -296,10 +375,10 @@ export function OversightSettings() {
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2 text-amber-700 dark:text-amber-400">
             <Eye className="h-5 w-5" />
-            {language === 'da' ? 'Overvågningstilstand aktiv' : 'Oversight Mode Active'}
+            {isDa ? 'Overvågningstilstand aktiv' : 'Oversight Mode Active'}
           </CardTitle>
           <CardDescription className="text-sm">
-            {language === 'da'
+            {isDa
               ? 'Du ser data fra en anden virksomhed i skrivebeskyttet tilstand'
               : 'You are viewing data from another company in read-only mode'}
           </CardDescription>
@@ -315,12 +394,12 @@ export function OversightSettings() {
                   {oversightCompanyName}
                 </p>
                 <p className="text-xs text-amber-600 dark:text-amber-400">
-                  {language === 'da' ? 'Overvåget virksomhed' : 'Overseen company'}
+                  {isDa ? 'Overvåget virksomhed' : 'Overseen company'}
                 </p>
               </div>
               <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300 border-amber-200 dark:border-amber-800">
                 <Eye className="h-3 w-3 mr-1" />
-                {language === 'da' ? 'Skrivebeskyttet' : 'Read-only'}
+                {isDa ? 'Skrivebeskyttet' : 'Read-only'}
               </Badge>
             </div>
           </div>
@@ -328,7 +407,7 @@ export function OversightSettings() {
           <div className="flex items-start gap-2 text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20 rounded-lg p-3">
             <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
             <p>
-              {language === 'da'
+              {isDa
                 ? 'Du kan ikke oprette, redigere eller slette data mens du overvåger en anden virksomhed. Alle ændringer er blokeret.'
                 : 'You cannot create, edit, or delete data while overseeing another company. All modifications are blocked.'}
             </p>
@@ -339,7 +418,7 @@ export function OversightSettings() {
             className="w-full bg-amber-600 hover:bg-amber-700 text-white gap-2"
           >
             <X className="h-4 w-4" />
-            {language === 'da' ? 'Afslut overvågning' : 'End Oversight'}
+            {isDa ? 'Afslut overvågning' : 'End Oversight'}
           </Button>
         </CardContent>
       </Card>
@@ -354,10 +433,10 @@ export function OversightSettings() {
       <div>
         <h3 className="text-lg font-semibold text-[#1a2e2a] dark:text-[#e2e8e6] flex items-center gap-2">
           <Shield className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-          {language === 'da' ? 'Tilsyn' : 'Oversight'}
+          {isDa ? 'Tilsyn' : 'Oversight'}
         </h3>
         <p className="text-sm text-[#6b7c75]">
-          {language === 'da'
+          {isDa
             ? 'Se alle virksomheder i skrivebeskyttet tilstand som AlphaAi app-ejer'
             : 'View all companies in read-only mode as the AlphaAi App Owner'}
         </p>
@@ -369,7 +448,7 @@ export function OversightSettings() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#6b7c75]" />
             <Input
-              placeholder={language === 'da' ? 'Søg efter virksomhed, CVR eller e-mail...' : 'Search by company name, CVR, or email...'}
+              placeholder={isDa ? 'Søg efter virksomhed, CVR eller e-mail...' : 'Search by company name, CVR, or email...'}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-10 h-10"
@@ -383,10 +462,10 @@ export function OversightSettings() {
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <Building2 className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-            {language === 'da' ? 'Alle virksomheder' : 'All Companies'} ({tenants.length})
+            {isDa ? 'Alle virksomheder' : 'All Companies'} ({tenants.length})
           </CardTitle>
           <CardDescription>
-            {language === 'da'
+            {isDa
               ? 'Vælg en virksomhed for at se dens data i skrivebeskyttet tilstand'
               : 'Select a company to view its data in read-only mode'}
           </CardDescription>
@@ -395,80 +474,159 @@ export function OversightSettings() {
           {loading ? (
             <div className="text-center py-8 text-[#6b7c75]">
               <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
-              {language === 'da' ? 'Indlæser...' : 'Loading...'}
+              {isDa ? 'Indlæser...' : 'Loading...'}
             </div>
           ) : tenants.length === 0 ? (
             <div className="text-center py-8 text-[#6b7c75]">
               {search
-                ? (language === 'da' ? 'Ingen virksomheder fundet' : 'No companies found')
-                : (language === 'da' ? 'Ingen virksomheder tilgængelige' : 'No companies available')}
+                ? (isDa ? 'Ingen virksomheder fundet' : 'No companies found')
+                : (isDa ? 'Ingen virksomheder tilgængelige' : 'No companies available')}
             </div>
           ) : (
             <div className="space-y-1 max-h-96 overflow-y-auto">
               {tenants.map((tenant) => {
                 const isOwnCompany = tenant.id === user?.activeCompanyId;
                 const isAlphaAi = tenant.name.startsWith('AlphaAi');
+                const isTrialLoading = trialLoading === tenant.id;
+
                 return (
-                  <button
+                  <div
                     key={tenant.id}
-                    type="button"
-                    disabled={isOwnCompany || switching === tenant.id}
-                    onClick={() => {
-                      setSelectedTenant(tenant);
-                      setConfirmOpen(true);
-                    }}
-                    className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-left ${
+                    className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
                       isOwnCompany
-                        ? 'bg-gray-50 dark:bg-white/5 opacity-50 cursor-not-allowed'
+                        ? 'bg-gray-50 dark:bg-white/5 opacity-50'
                         : isAlphaAi
-                          ? 'bg-amber-50/80 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-800/30 hover:bg-amber-50 dark:hover:bg-amber-950/30 cursor-pointer'
-                          : 'bg-[#f8faf9] dark:bg-[#1a2520] hover:bg-[#f0f5f2] dark:hover:bg-[#1e2b26] cursor-pointer'
+                          ? 'bg-amber-50/80 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-800/30'
+                          : 'bg-[#f8faf9] dark:bg-[#1a2520]'
                     }`}
                   >
-                    <div className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 ${
-                      isAlphaAi
-                        ? 'bg-amber-200 dark:bg-amber-800/40'
-                        : 'bg-amber-100 dark:bg-amber-900/30'
-                    }`}>
-                      {isAlphaAi
-                        ? <Crown className="h-4 w-4 text-amber-700 dark:text-amber-300" />
-                        : <Building2 className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                      }
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-[#1a2e2a] dark:text-[#e2e8e6] truncate">
-                        {tenant.name}
-                        {isOwnCompany && (
-                          <span className="text-[#6b7c75] ml-1 text-xs">
-                            ({language === 'da' ? 'din virksomhed' : 'your company'})
-                          </span>
-                        )}
-                      </p>
-                      <p className="text-xs text-[#6b7c75] flex items-center gap-2 truncate">
-                        {tenant.cvrNumber && <span>CVR: {tenant.cvrNumber}</span>}
-                        {tenant.email && <span>{tenant.email}</span>}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <Badge variant="outline" className="text-[10px] flex items-center gap-1">
+                    {/* Clickable area — name + chevron for oversight */}
+                    <button
+                      type="button"
+                      disabled={isOwnCompany || switching === tenant.id}
+                      onClick={() => {
+                        setSelectedTenant(tenant);
+                        setConfirmOpen(true);
+                      }}
+                      className="flex items-center gap-3 flex-1 min-w-0 text-left cursor-pointer disabled:cursor-not-allowed"
+                    >
+                      <div className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 ${
+                        isAlphaAi
+                          ? 'bg-amber-200 dark:bg-amber-800/40'
+                          : 'bg-amber-100 dark:bg-amber-900/30'
+                      }`}>
+                        {isAlphaAi
+                          ? <Crown className="h-4 w-4 text-amber-700 dark:text-amber-300" />
+                          : <Building2 className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                        }
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-[#1a2e2a] dark:text-[#e2e8e6] truncate">
+                          {tenant.name}
+                          {isOwnCompany && (
+                            <span className="text-[#6b7c75] ml-1 text-xs">
+                              ({isDa ? 'din virksomhed' : 'your company'})
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-xs text-[#6b7c75] flex items-center gap-2 truncate">
+                          {tenant.cvrNumber && <span>CVR: {tenant.cvrNumber}</span>}
+                          {tenant.email && <span>{tenant.email}</span>}
+                        </p>
+                      </div>
+                      {!isOwnCompany && (
+                        <ChevronRight className="h-4 w-4 text-[#6b7c75] shrink-0" />
+                      )}
+                    </button>
+
+                    {/* Right-side indicators (compact badges) */}
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {/* Member count */}
+                      <Badge variant="outline" className="text-[10px] flex items-center gap-1 px-1.5">
                         <Users className="h-3 w-3" />
                         {tenant.memberCount}
                       </Badge>
+
+                      {/* Trial indicator */}
+                      {tenant.trial?.isActive ? (
+                        <Badge className="text-[10px] bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 px-1.5 flex items-center gap-0.5">
+                          <Timer className="h-2.5 w-2.5" />
+                          {tenant.trial.earliestExpiry
+                            ? formatTrialExpiry(tenant.trial.earliestExpiry)
+                            : (isDa ? 'Prøve' : 'Trial')}
+                        </Badge>
+                      ) : (
+                        !isOwnCompany && (
+                          <Badge className="text-[10px] bg-gray-100 text-gray-500 dark:bg-gray-800/30 dark:text-gray-400 px-1.5">
+                            {isDa ? 'Ingen prøve' : 'No trial'}
+                          </Badge>
+                        )
+                      )}
+
+                      {/* Demo / Inactive */}
                       {tenant.isDemo && (
-                        <Badge className="text-[10px] bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                        <Badge className="text-[10px] bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 px-1.5">
                           Demo
                         </Badge>
                       )}
                       {!tenant.isActive && (
-                        <Badge className="text-[10px] bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">
-                          {language === 'da' ? 'Inaktiv' : 'Inactive'}
+                        <Badge className="text-[10px] bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 px-1.5">
+                          {isDa ? 'Inaktiv' : 'Inactive'}
                         </Badge>
                       )}
+
+                      {/* Trial actions dropdown (not for own company) */}
                       {!isOwnCompany && (
-                        <ChevronRight className="h-4 w-4 text-[#6b7c75]" />
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 shrink-0"
+                              disabled={isTrialLoading}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {isTrialLoading
+                                ? <Loader2 className="h-3.5 w-3.5 animate-spin text-[#6b7c75]" />
+                                : <MoreVertical className="h-3.5 w-3.5 text-[#6b7c75]" />
+                              }
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-44">
+                            <DropdownMenuItem
+                              onClick={() => handleTrialAction(tenant, 'set', 30)}
+                              disabled={isTrialLoading}
+                              className="gap-2 text-sm"
+                            >
+                              <Play className="h-3.5 w-3.5 text-emerald-600" />
+                              {isDa ? 'Start prøve — 30 dage' : 'Start trial — 30 days'}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleTrialAction(tenant, 'set', 60)}
+                              disabled={isTrialLoading}
+                              className="gap-2 text-sm"
+                            >
+                              <Play className="h-3.5 w-3.5 text-emerald-600" />
+                              {isDa ? 'Start prøve — 60 dage' : 'Start trial — 60 days'}
+                            </DropdownMenuItem>
+                            {tenant.trial?.isActive && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() => handleTrialAction(tenant, 'cancel')}
+                                  disabled={isTrialLoading}
+                                  className="gap-2 text-sm text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-950/30"
+                                >
+                                  <Ban className="h-3.5 w-3.5" />
+                                  {isDa ? 'Annuller prøveperiode' : 'Cancel trial'}
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       )}
                     </div>
-                  </button>
+                  </div>
                 );
               })}
             </div>
@@ -476,16 +634,16 @@ export function OversightSettings() {
         </CardContent>
       </Card>
 
-      {/* Confirm dialog */}
+      {/* Confirm oversight dialog */}
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
               <Eye className="h-5 w-5" />
-              {language === 'da' ? 'Start overvågning?' : 'Start Oversight?'}
+              {isDa ? 'Start overvågning?' : 'Start Oversight?'}
             </DialogTitle>
             <DialogDescription>
-              {language === 'da'
+              {isDa
                 ? `Du er ved at se data fra "${selectedTenant?.name}" i skrivebeskyttet tilstand. Dette vil blive logget i revisionslogen.`
                 : `You are about to view data from "${selectedTenant?.name}" in read-only mode. This will be logged in the audit trail.`}
             </DialogDescription>
@@ -494,12 +652,12 @@ export function OversightSettings() {
             <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
             <div>
               <p className="font-medium mb-1">
-                {language === 'da' ? 'Vigtigt:' : 'Important:'}
+                {isDa ? 'Vigtigt:' : 'Important:'}
               </p>
               <ul className="list-disc pl-4 space-y-0.5">
-                <li>{language === 'da' ? 'Du kan kun læse data, ikke ændre det' : 'You can only read data, not modify it'}</li>
-                <li>{language === 'da' ? 'Adgangen logges som "oversight" i revisionslogen' : 'Access is logged as "oversight" in the audit trail'}</li>
-                <li>{language === 'da' ? 'Du kan afslutte overvågningen når som helst' : 'You can end oversight at any time'}</li>
+                <li>{isDa ? 'Du kan kun læse data, ikke ændre det' : 'You can only read data, not modify it'}</li>
+                <li>{isDa ? 'Adgangen logges som "oversight" i revisionslogen' : 'Access is logged as "oversight" in the audit trail'}</li>
+                <li>{isDa ? 'Du kan afslutte overvågningen når som helst' : 'You can end oversight at any time'}</li>
               </ul>
             </div>
           </div>
@@ -512,7 +670,7 @@ export function OversightSettings() {
               }}
               className="flex-1"
             >
-              {language === 'da' ? 'Annuller' : 'Cancel'}
+              {isDa ? 'Annuller' : 'Cancel'}
             </Button>
             <Button
               onClick={() => selectedTenant && handleStartOversight(selectedTenant)}
@@ -524,7 +682,7 @@ export function OversightSettings() {
               ) : (
                 <Eye className="h-4 w-4" />
               )}
-              {language === 'da' ? 'Start overvågning' : 'Start Oversight'}
+              {isDa ? 'Start overvågning' : 'Start Oversight'}
             </Button>
           </div>
         </DialogContent>
