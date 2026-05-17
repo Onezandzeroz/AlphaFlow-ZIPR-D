@@ -6,12 +6,14 @@ import type {
 } from './types.js';
 import {
   DEFAULT_ACCESS_LEVEL, GRANTED_ACCESS_LEVEL, CACHE_TTL_MS, EXPIRY_WARNING_DAYS,
+  TRIAL_DURATION_DAYS,
 } from './types.js';
 import {
   getUserById, updateUserAccess, getProofById,
   getActiveProofByUserId, deactivateOldProofs, logAccessChange,
   updateProofStatus, getExpiredActiveProofs, getProofsExpiringSoon,
   createMessage, getActiveProofs, associateProofWithUser,
+  findOrCreateUserById, getExpiredTrialUsers,
 } from './data-layer.js';
 import { reverifyStoredProof, type VerificationResult } from './proof-verifier.js';
 import type { ProofRecord } from './types.js';
@@ -75,8 +77,12 @@ export function checkAccess(userId: string): AccessCheckResult {
   if (user.access_expiry) {
     const expiryDate = new Date(user.access_expiry);
     if (expiryDate <= new Date()) {
+      // Determine reason: trial_expired if no active proof, proof_expired otherwise
+      const activeProof = getActiveProofByUserId(userId);
+      const reason = activeProof ? 'proof_expired' : 'trial_expired';
+
       updateUserAccess(userId, DEFAULT_ACCESS_LEVEL, null);
-      logAccessChange(userId, user.access_level, DEFAULT_ACCESS_LEVEL, 'proof_expired');
+      logAccessChange(userId, user.access_level, DEFAULT_ACCESS_LEVEL, reason);
       invalidateCache(userId);
 
       return {
@@ -294,6 +300,32 @@ export function processExpiredAccess(): {
 
   console.log(`[AccessEngine] Expiry check: ${expiredProofs.length} expired, ${downgraded} downgraded, ${warned} warned`);
 
+  // 2b. Handle expired trial users (users with past access_expiry but no active proof)
+  const expiredTrialUsers = getExpiredTrialUsers(now);
+  let trialDowngraded = 0;
+  for (const trialUser of expiredTrialUsers) {
+    // Skip users who have an active proof — they're handled by the proof expiry logic above
+    const activeProof = getActiveProofByUserId(trialUser.id);
+    if (activeProof) continue;
+
+    updateUserAccess(trialUser.id, DEFAULT_ACCESS_LEVEL, null);
+    logAccessChange(trialUser.id, trialUser.access_level as AccessLevel, DEFAULT_ACCESS_LEVEL, 'trial_expired');
+    invalidateCache(trialUser.id);
+    trialDowngraded++;
+    details.push({
+      proofId: '',
+      userId: trialUser.id,
+      action: 'trial_expired',
+      reason: `Trial period expired (was: ${trialUser.access_expiry})`,
+    });
+    console.log(`[AccessEngine] Trial expired: downgraded user ${trialUser.id} to ${DEFAULT_ACCESS_LEVEL}`);
+  }
+
+  if (trialDowngraded > 0) {
+    downgraded += trialDowngraded;
+    console.log(`[AccessEngine] Trial expiry: ${trialDowngraded} trial users downgraded`);
+  }
+
   return {
     processed: expiredProofs.length,
     downgraded,
@@ -361,4 +393,60 @@ export function adminOverride(userId: string, targetLevel?: AccessLevel): {
   console.log(`[AccessEngine] Admin override: user ${userId} ${previousLevel} → ${newLevel}`);
 
   return { success: true, previousLevel, newLevel };
+}
+
+// ─── Trial Grant ────────────────────────────────────────────
+
+export type GrantTrialResult = {
+  success: boolean;
+  previousLevel: AccessLevel;
+  newLevel: AccessLevel;
+  trialExpiry: string | null;
+  error?: string;
+};
+
+/**
+ * Grant a free trial period to a user.
+ * Sets access_level to read_write with a TRIAL_DURATION_DAYS expiry.
+ * Logs with 'trial_granted' reason code.
+ * If the user already has read_write access (e.g., via a proof), this is a no-op.
+ */
+export function grantTrial(userId: string, email?: string, name?: string): GrantTrialResult {
+  // Ensure user exists — auto-create if this is their first interaction
+  let user = getUserById(userId);
+  if (!user) {
+    user = findOrCreateUserById(userId, email, name);
+  }
+
+  // Already has read_write access — skip (don't overwrite a proof-based grant)
+  if (user.access_level === GRANTED_ACCESS_LEVEL && user.access_expiry) {
+    return {
+      success: true,
+      previousLevel: user.access_level,
+      newLevel: user.access_level,
+      trialExpiry: user.access_expiry,
+      error: 'User already has active access',
+    };
+  }
+
+  const previousLevel = user.access_level;
+  const trialExpiry = new Date();
+  trialExpiry.setDate(trialExpiry.getDate() + TRIAL_DURATION_DAYS);
+  const trialExpiryISO = trialExpiry.toISOString();
+
+  updateUserAccess(userId, GRANTED_ACCESS_LEVEL, trialExpiryISO);
+  logAccessChange(userId, previousLevel, GRANTED_ACCESS_LEVEL, 'trial_granted');
+  invalidateCache(userId);
+
+  console.log(
+    `[AccessEngine] Trial granted: user ${userId} (${email || 'unknown'}) ` +
+    `${previousLevel} → read_write (expires: ${trialExpiryISO})`
+  );
+
+  return {
+    success: true,
+    previousLevel,
+    newLevel: GRANTED_ACCESS_LEVEL,
+    trialExpiry: trialExpiryISO,
+  };
 }

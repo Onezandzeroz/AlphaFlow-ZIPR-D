@@ -13,6 +13,7 @@ import { MobileFab } from '@/components/mobile-fab';
 import { MobileBottomNav } from '@/components/mobile-bottom-nav';
 import { KeyboardShortcutsModal } from '@/components/keyboard-shortcuts-modal';
 import { UpgradeAccessModal } from '@/components/upgrade-access-modal';
+import { SubscriptionPlansPrompt } from '@/components/dashboard/subscription-plans-prompt';
 import { NotificationCenter } from '@/components/notification-center';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -808,6 +809,9 @@ export function AppLayout({
 
       {/* Global Upgrade Access Modal — shown on any write attempt without .tbkey */}
       <UpgradeAccessModal />
+
+      {/* First-login subscription plan prompt — shown to new users */}
+      <SubscriptionPlansPrompt />
     </div>
   );
 }

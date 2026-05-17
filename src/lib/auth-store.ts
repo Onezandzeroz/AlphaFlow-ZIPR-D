@@ -11,6 +11,7 @@ export interface User {
   isDemoCompany?: boolean;
   isSuperDev?: boolean;
   hasAppOwner?: boolean;
+  isFirstLogin?: boolean;
   activeCompanyId?: string | null;
   activeCompanyRole?: string | null;
   activeCompanyName?: string | null;
@@ -167,7 +168,9 @@ export const useAuthStore = create<AuthState>()(
     {
       name: 'danish-bookkeeping-auth',
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ user: state.user }),
+      partialize: (state) => ({
+        user: state.user ? { ...state.user, isFirstLogin: undefined } : null,
+      }),
     }
   )
 );

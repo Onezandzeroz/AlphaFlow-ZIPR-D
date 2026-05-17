@@ -6,6 +6,7 @@ import { auditAuth, requestMetadata } from '@/lib/audit';
 import { sendVerificationEmail } from '@/lib/email-service';
 import { notifyOwner } from '@/lib/notify-owner';
 import { logger } from '@/lib/logger';
+import { tokenpay } from '@/lib/tokenpay';
 import crypto from 'crypto';
 
 export async function POST(request: NextRequest) {
@@ -168,6 +169,18 @@ export async function POST(request: NextRequest) {
 
     // Audit registration
     await auditAuth(user.id, 'REGISTER', requestMetadata(request), company.id);
+
+    // ─── Auto-grant 60-day trial access (fire-and-forget) ───────
+    // Grants read_write access without requiring a .tbkey proof file.
+    // Uses 'trial_granted' reason code in TokenPay access logs.
+    // The existing cron will auto-downgrade to read_only when the trial expires.
+    tokenpay.grantTrial(user.id, normalizedEmail, user.businessName || undefined)
+      .then((result) => {
+        logger.info(`[REGISTER] Trial granted to ${normalizedEmail}: expires ${result.trialExpiry}`);
+      })
+      .catch((err) => {
+        logger.warn(`[REGISTER] Failed to grant trial to ${normalizedEmail}:`, err);
+      });
 
     // Return success — the client will show "check your email" screen
     return NextResponse.json({

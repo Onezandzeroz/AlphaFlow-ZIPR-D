@@ -164,6 +164,17 @@ export function deleteUser(userId: string): boolean {
   return result.changes > 0;
 }
 
+/**
+ * Get users whose access_expiry has passed but still have read_write access.
+ * These are trial users (or proof users whose proofs weren't caught by the proof expiry check).
+ * Used by the cron to ensure all expired users are properly downgraded.
+ */
+export function getExpiredTrialUsers(now: string): { id: string; access_level: string; access_expiry: string }[] {
+  return db.prepare(
+    "SELECT id, access_level, access_expiry FROM users WHERE access_level = 'read_write' AND access_expiry IS NOT NULL AND access_expiry <= ?"
+  ).all(now) as { id: string; access_level: string; access_expiry: string }[];
+}
+
 // ═══════════════════════════════════════════════════════════
 // Proof Operations
 // ═══════════════════════════════════════════════════════════

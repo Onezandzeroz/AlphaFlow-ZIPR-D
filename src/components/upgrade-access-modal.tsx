@@ -97,11 +97,7 @@ export function UpgradeAccessModal() {
       >
         {/* ── Gradient Header ── */}
         <div
-          className={`relative px-6 pt-6 pb-5 ${
-            isExpired
-              ? 'bg-gradient-to-br from-amber-500 via-orange-500 to-amber-600'
-              : 'bg-gradient-to-br from-[#0d9488] via-[#0f766e] to-[#115e59]'
-          }`}
+          className="relative px-6 pt-6 pb-5 bg-gradient-to-br from-[#0d9488] via-[#0f766e] to-[#115e59]"
         >
           {/* Decorative circles */}
           <div className="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-white/10" />
@@ -129,7 +125,7 @@ export function UpgradeAccessModal() {
                     className="h-[136px] w-[136px] object-contain opacity-60"
                     draggable={false}
                   />
-                  <Clock className="absolute -top-2 -right-2 h-5 w-5 text-white bg-amber-600 rounded-full p-0.5" />
+                  <Clock className="absolute -top-2 -right-2 h-5 w-5 text-white bg-[#0a5f59] rounded-full p-0.5" />
                 </div>
               ) : (
                 <img
@@ -219,11 +215,7 @@ export function UpgradeAccessModal() {
             <button
               type="button"
               onClick={handleGoToSettings}
-              className={`flex items-center justify-center gap-2.5 w-full h-12 px-5 text-sm font-semibold text-white rounded-xl border-0 shadow-sm cursor-pointer transition-all duration-200 hover:shadow-md active:scale-[0.98] ${
-                isExpired
-                  ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-amber-500/20'
-                  : 'bg-gradient-to-r from-[#0d9488] to-[#0f766e] hover:from-[#0a7c72] hover:to-[#0a5f59] shadow-teal-500/20'
-              }`}
+              className="flex items-center justify-center gap-2.5 w-full h-12 px-5 text-sm font-semibold text-white rounded-xl border-0 shadow-sm cursor-pointer transition-all duration-200 hover:shadow-md active:scale-[0.98] bg-gradient-to-r from-[#0d9488] to-[#0f766e] hover:from-[#0a7c72] hover:to-[#0a5f59] shadow-teal-500/20"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
               <span>{t('upgradeUploadProof')}</span>

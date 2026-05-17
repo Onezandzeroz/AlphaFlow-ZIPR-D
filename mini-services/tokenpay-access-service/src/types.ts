@@ -15,7 +15,9 @@ export type ReasonCode =
   | 'proof_revoked'
   | 'proof_invalid'
   | 'admin_override'
-  | 'system_revoke';
+  | 'system_revoke'
+  | 'trial_granted'
+  | 'trial_expired';
 
 export type MessagePriority = 'info' | 'warning' | 'urgent';
 
@@ -142,6 +144,7 @@ export interface TokenPayStats {
 export const DEFAULT_ACCESS_LEVEL: AccessLevel = 'read_only';
 export const CACHE_TTL_MS = 60_000;          // 60 seconds
 export const EXPIRY_WARNING_DAYS = 7;        // warn users 7 days before expiry
+export const TRIAL_DURATION_DAYS = 60;       // free trial duration in days
 export const CRON_INTERVAL_MS = 5 * 60_000;  // 5 minutes
 export const PROOF_DIR = './data/proofs';    // where .tbkey files are stored (encrypted)
 export const MANIFEST_FILENAME = 'manifest.json';

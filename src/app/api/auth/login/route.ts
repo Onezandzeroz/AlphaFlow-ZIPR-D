@@ -77,6 +77,12 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Detect first login: check if user has any previous sessions
+    const previousSessionCount = await db.session.count({
+      where: { userId: user.id },
+    });
+    const isFirstLogin = previousSessionCount === 0;
+
     // Block login for non-SuperDev users who haven't verified their email
     if (!user.isSuperDev && !user.emailVerified) {
       return NextResponse.json(
@@ -233,6 +239,7 @@ export async function POST(request: NextRequest) {
         demoModeEnabled: user.demoModeEnabled ?? false,
         isSuperDev: user.isSuperDev,
         hasAppOwner,
+        isFirstLogin,
         activeCompanyId,
         activeCompanyRole,
         isDemoCompany: userCompany?.company.isDemo ?? false,
