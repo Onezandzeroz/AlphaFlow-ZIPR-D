@@ -471,6 +471,31 @@ export const tokenpay = {
 };
 
 // ═══════════════════════════════════════════════════════════════
+// STANDALONE EXPORTS (for Turbopack compatibility)
+// ═══════════════════════════════════════════════════════════════
+//
+// Some methods are exported as standalone functions because
+// Turbopack's type checker may truncate types on large object literals.
+
+/**
+ * Grant a free trial period (60 days) of read_write access.
+ * Used during registration to auto-grant trial access without .tbkey proofs.
+ * Logs with 'trial_granted' reason code.
+ */
+export async function grantTrial(userId: string, email?: string, name?: string): Promise<{
+  success: boolean;
+  userId: string;
+  previousLevel: AccessLevel;
+  newLevel: AccessLevel;
+  trialExpiry: string | null;
+}> {
+  return apiFetch('admin/grant-trial', {
+    method: 'POST',
+    body: JSON.stringify({ userId, email, name }),
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
 // SERVER-SIDE ACCESS GUARD (owner bypass + TokenPay)
 // ═══════════════════════════════════════════════════════════════
 //
