@@ -107,9 +107,11 @@ export function createUser(email: string, name?: string): UserRecord {
   const id = uuid();
   const now = new Date().toISOString();
   db.prepare(
-    'INSERT INTO users (id, email, name, access_level, access_expiry, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+    'INSERT OR IGNORE INTO users (id, email, name, access_level, access_expiry, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
   ).run(id, email, name || null, DEFAULT_ACCESS_LEVEL, null, now, now);
-  return getUserById(id)!;
+  // Re-fetch in case INSERT OR IGNORE was a no-op (race on email uniqueness)
+  const user = getUserById(id) ?? getUserByEmail(email);
+  return user!;
 }
 
 export function getUserById(id: string): UserRecord | null {
@@ -137,11 +139,17 @@ export function findOrCreateUserById(userId: string, email?: string, name?: stri
 
   const id = userId; // Use the host app's userId as-is
   const now = new Date().toISOString();
+  // Use INSERT OR IGNORE to handle race conditions where two concurrent requests
+  // both pass the getUserById check before either inserts (SQLITE_CONSTRAINT_UNIQUE).
   db.prepare(
-    'INSERT INTO users (id, email, name, access_level, access_expiry, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+    'INSERT OR IGNORE INTO users (id, email, name, access_level, access_expiry, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
   ).run(id, email || null, name || null, DEFAULT_ACCESS_LEVEL, null, now, now);
-  console.log(`[DataLayer] Auto-created user ${id} on proof upload`);
-  return getUserById(id)!;
+  // Always re-fetch to get the correct record (either just-inserted or pre-existing from race)
+  const user = getUserById(id);
+  if (!user) {
+    console.error(`[DataLayer] Failed to find or create user ${id} after INSERT OR IGNORE`);
+  }
+  return user!;
 }
 
 export function updateUserAccess(

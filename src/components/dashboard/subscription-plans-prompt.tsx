@@ -178,36 +178,44 @@ export function SubscriptionPlansPrompt() {
   const [animatingIn, setAnimatingIn] = useState(false);
   const [animatingOut, setAnimatingOut] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
+  // Guard: ensures we only schedule the prompt once per component lifecycle.
+  // Without this, React's effect cleanup would clear the timer when `user`
+  // reference changes (Zustand persist re-save), causing the prompt to never appear.
+  const hasScheduled = useRef(false);
 
   // Detect first-login per user via localStorage flags.
   // Keys include user.id so different users on the same browser each get
   // their own first-login prompt. The Zustand persist layer strips
   // isFirstLogin from localStorage (see auth-store.ts partialize), so we
   // track it ourselves here.
-  const shouldShow = useCallback(() => {
-    if (!user) return false;
-    if (user.isSuperDev) return false;
-    if (user.isDemoCompany) return false;
-    if (typeof window === 'undefined') return false;
+  //
+  // IMPORTANT: We set the localStorage key INSIDE the effect (not in a
+  // separate shouldShow callback) to avoid a race condition where the key
+  // is set but the timer gets cleaned up on the next render.
+  useEffect(() => {
+    if (!user || hasScheduled.current) return;
+    if (user.isSuperDev) return;
+    if (user.isDemoCompany) return;
+    if (typeof window === 'undefined') return;
     const dismissedKey = `${DISMISSED_PREFIX}${user.id}`;
     const everLoggedKey = `${EVER_LOGGED_PREFIX}${user.id}`;
-    if (localStorage.getItem(dismissedKey) === 'true') return false;
-    // If this user has already been through this before, don't show again
-    if (localStorage.getItem(everLoggedKey) === 'true') return false;
-    // First time for this user — mark so a refresh won't re-trigger
-    localStorage.setItem(everLoggedKey, 'true');
-    return true;
-  }, [user]);
+    if (localStorage.getItem(dismissedKey) === 'true') return;
+    if (localStorage.getItem(everLoggedKey) === 'true') return;
 
-  useEffect(() => {
-    if (shouldShow()) {
-      const timer = setTimeout(() => {
-        setAnimatingIn(true);
-        setVisible(true);
-      }, 800);
-      return () => clearTimeout(timer);
-    }
-  }, [shouldShow]);
+    // First time for this user — mark immediately so refresh won't re-trigger.
+    // Do NOT return a cleanup function — we deliberately let the timer run
+    // even if `user` reference changes on a subsequent render.
+    localStorage.setItem(everLoggedKey, 'true');
+    hasScheduled.current = true;
+
+    const timer = setTimeout(() => {
+      setAnimatingIn(true);
+      setVisible(true);
+    }, 800);
+    // Intentionally NO cleanup returned. If we returned () => clearTimeout(timer),
+    // React would call it when `user` reference changes (Zustand persist re-save),
+    // killing the timer before it fires. The hasScheduled ref prevents double-scheduling.
+  }, [user]);
 
   const dismiss = useCallback(() => {
     setAnimatingOut(true);
