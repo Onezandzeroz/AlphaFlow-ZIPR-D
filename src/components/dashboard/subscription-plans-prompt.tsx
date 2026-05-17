@@ -161,11 +161,11 @@ const PLANS: Plan[] = [
   },
 ];
 
-// ─── Storage keys ─────────────────────────────────────────────────────
-// DISMISSED_KEY  — set once the user actively dismisses the prompt
-// EVER_LOGGED    — set on the FIRST successful login so we know to show the prompt
-const DISMISSED_KEY = 'alphaflow-plan-prompt-dismissed';
-const EVER_LOGGED_KEY = 'alphaflow-ever-logged-in';
+// ─── Storage key prefixes ──────────────────────────────────────────────
+// Keys are made per-user by appending user.id so that each new user
+// sees the prompt on their first login, even on a shared browser.
+const DISMISSED_PREFIX = 'alphaflow-plan-prompt-dismissed-';
+const EVER_LOGGED_PREFIX = 'alphaflow-ever-logged-';
 
 // ─── Component ─────────────────────────────────────────────────────────
 
@@ -179,21 +179,23 @@ export function SubscriptionPlansPrompt() {
   const [animatingOut, setAnimatingOut] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
 
-  // Detect first-login via localStorage flag instead of user.isFirstLogin.
-  // The Zustand persist layer strips isFirstLogin from localStorage (see
-  // auth-store.ts partialize), so it's always undefined after a page reload.
-  // Instead we use our own flag: if EVER_LOGGED_KEY is not set, this is the
-  // first time the app reaches this code for this browser → show the prompt.
+  // Detect first-login per user via localStorage flags.
+  // Keys include user.id so different users on the same browser each get
+  // their own first-login prompt. The Zustand persist layer strips
+  // isFirstLogin from localStorage (see auth-store.ts partialize), so we
+  // track it ourselves here.
   const shouldShow = useCallback(() => {
     if (!user) return false;
     if (user.isSuperDev) return false;
     if (user.isDemoCompany) return false;
     if (typeof window === 'undefined') return false;
-    if (localStorage.getItem(DISMISSED_KEY) === 'true') return false;
-    // If the user has already been through this before, don't show again
-    if (localStorage.getItem(EVER_LOGGED_KEY) === 'true') return false;
-    // First time — mark that we've seen this so a refresh won't re-trigger
-    localStorage.setItem(EVER_LOGGED_KEY, 'true');
+    const dismissedKey = `${DISMISSED_PREFIX}${user.id}`;
+    const everLoggedKey = `${EVER_LOGGED_PREFIX}${user.id}`;
+    if (localStorage.getItem(dismissedKey) === 'true') return false;
+    // If this user has already been through this before, don't show again
+    if (localStorage.getItem(everLoggedKey) === 'true') return false;
+    // First time for this user — mark so a refresh won't re-trigger
+    localStorage.setItem(everLoggedKey, 'true');
     return true;
   }, [user]);
 
@@ -213,9 +215,11 @@ export function SubscriptionPlansPrompt() {
       setVisible(false);
       setAnimatingIn(false);
       setAnimatingOut(false);
-      localStorage.setItem(DISMISSED_KEY, 'true');
+      if (user?.id) {
+        localStorage.setItem(`${DISMISSED_PREFIX}${user.id}`, 'true');
+      }
     }, 300);
-  }, []);
+  }, [user]);
 
   const handleOverlayClick = useCallback(
     (e: React.MouseEvent) => {
