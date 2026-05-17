@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
           members: {
             select: {
               userId: true,
-              user: { select: { id: true, email: true, name: true } },
+              user: { select: { id: true, email: true, businessName: true } },
             },
           },
         },
