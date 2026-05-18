@@ -346,8 +346,8 @@ export function SubscriptionPlansPrompt() {
             </h2>
             <p className="mt-1.5 text-xs sm:text-sm lg:text-base text-white/50 max-w-2xl mx-auto leading-relaxed">
               {t(
-                'Du har 2 måneders gratis adgang. Vælg en plan der passer til din virksomhed.',
-                'You have 2 months of free access. Pick a plan that fits your business.',
+                'Vælg en plan, der passer til din virksomhed, med det samme. På den måde bevarer du skriveadgangen og undgår afbrydelser i arbejdets kontinuitet, når prøveperioden slutter.',
+                'Choose a plan that fits your business right away. That way you keep write access and avoid interruptions to your work continuity when the trial ends.',
               )}
             </p>
           </div>
