@@ -63,11 +63,9 @@ const PLANS: Plan[] = [
       { da: 'Momsindberetning', en: 'VAT reporting' },
       { da: 'Bilagsupload & OCR-scanning', en: 'Receipt upload & OCR scanning' },
       { da: 'Bankintegration', en: 'Bank integration' },
-      { da: 'Rådgivnings AI-Agent', en: 'Advisory AI agent' },
-      { da: 'Mail & chat support', en: 'Mail & chat support' },
     ],
-    limitDa: '2 måneder',
-    limitEn: '2 months',
+    limitDa: '',
+    limitEn: '',
     bindDa: 'Ingen',
     bindEn: 'None',
     ctaDa: 'Prøv gratis nu',
@@ -388,16 +386,6 @@ export function SubscriptionPlansPrompt() {
                       </div>
                     )}
 
-                    {/* Trial badge (only on Free card) */}
-                    {isFree && (
-                      <div className="mx-auto mb-2 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#0d9488]/20 border border-[#0d9488]/30">
-                        <Gift className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-[#2dd4bf]" />
-                        <span className="text-[9px] sm:text-[10px] font-semibold text-[#2dd4bf] tracking-wide leading-tight">
-                          {t('2 MDR. GRATIS · FULD ADGANG', '2 MOS. FREE · FULL ACCESS')}
-                        </span>
-                      </div>
-                    )}
-
                     {/* ── Plan name ── */}
                     <p className={`text-xs sm:text-sm lg:text-base font-bold uppercase tracking-wider
                       ${isPopular ? 'text-[#f59e0b]' : isFree ? 'text-[#2dd4bf]/70' : 'text-[#2dd4bf]'}
@@ -446,16 +434,21 @@ export function SubscriptionPlansPrompt() {
                     </ul>
 
                     {/* ── Binding / Limitation ── */}
-                    <div className="mt-2 sm:mt-2.5 pt-2 sm:pt-2.5 border-t border-white/[0.06] space-y-0.5">
-                      {isFree && plan.limitDa && (
-                        <p className="text-[10px] sm:text-xs text-white/30">
-                          {isDa ? `Begrænsning: ${plan.limitDa}` : `Limit: ${plan.limitEn}`}
-                        </p>
-                      )}
+                    <div className="mt-2 sm:mt-2.5 pt-2 sm:pt-2.5 border-t border-white/[0.06]">
                       <p className="text-[10px] sm:text-xs text-white/30">
                         {isDa ? `Binding: ${plan.bindDa}` : `Commitment: ${plan.bindEn}`}
                       </p>
                     </div>
+
+                    {/* Trial badge (only on Free card, above CTA) */}
+                    {isFree && (
+                      <div className="mt-2 inline-flex items-center justify-center gap-1.5 mx-auto px-2.5 py-0.5 rounded-full bg-[#0d9488]/20 border border-[#0d9488]/30">
+                        <Gift className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-[#2dd4bf]" />
+                        <span className="text-[9px] sm:text-[10px] font-semibold text-[#2dd4bf] tracking-wide leading-tight">
+                          {t('2 MDR. GRATIS · FULD ADGANG', '2 MOS. FREE · FULL ACCESS')}
+                        </span>
+                      </div>
+                    )}
 
                     {/* ── CTA button (pinned to bottom via mt-auto) ── */}
                     <button
