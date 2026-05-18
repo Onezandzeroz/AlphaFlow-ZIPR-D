@@ -9,7 +9,6 @@ import {
   ArrowRight,
   ShieldCheck,
   Lock,
-  Clock,
   Check,
   Zap,
   Gift,
@@ -405,14 +404,14 @@ export function SubscriptionPlansPrompt() {
                       )}
                     </div>
 
-                    {/* ── Savings badge ── */}
-                    {plan.savingsDa && (
-                      <div className="mt-1 sm:mt-1.5 inline-flex justify-center">
+                    {/* ── Savings badge (always reserve height for alignment) ── */}
+                    <div className="mt-1 sm:mt-1.5 h-[18px] sm:h-[22px] flex items-center justify-center">
+                      {plan.savingsDa && (
                         <span className="text-[10px] sm:text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
                           {isDa ? plan.savingsDa : plan.savingsEn}
                         </span>
-                      </div>
-                    )}
+                      )}
+                    </div>
 
                     {/* ── Description ── */}
                     <p className="mt-2 sm:mt-2.5 text-[10px] sm:text-xs lg:text-sm text-white/45 leading-relaxed">
@@ -453,7 +452,7 @@ export function SubscriptionPlansPrompt() {
                     {/* ── CTA button (pinned to bottom via mt-auto) ── */}
                     <button
                       type="button"
-                      className={`mt-auto pt-2.5 sm:pt-3 w-full flex items-center justify-center gap-1.5
+                      className={`mt-auto w-full flex items-center justify-center gap-1.5
                         h-9 sm:h-10 lg:h-11 px-2 sm:px-3 rounded-lg text-xs sm:text-sm lg:text-base font-semibold
                         transition-all duration-200 hover:shadow-md active:scale-[0.97]
                         ${isPopular
@@ -463,7 +462,7 @@ export function SubscriptionPlansPrompt() {
                             : 'bg-[#0d9488]/80 hover:bg-[#0d9488] text-white/90 hover:text-white border border-[#0d9488]/40'
                         }`}
                     >
-                      <span className="leading-none">{isDa ? plan.ctaDa : plan.ctaEn}</span>
+                      <span>{isDa ? plan.ctaDa : plan.ctaEn}</span>
                       <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 opacity-60 group-hover:opacity-100 transition-opacity" />
                     </button>
                   </div>
@@ -487,10 +486,6 @@ export function SubscriptionPlansPrompt() {
               <div className="flex items-center gap-1">
                 <Zap className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-[#2dd4bf]/70" />
                 <span>{t('Ingen binding på prøve', 'No trial commitment')}</span>
-              </div>
-              <div className="hidden sm:flex items-center gap-1">
-                <Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-[#2dd4bf]/70" />
-                <span>{t('Annuller når som helst', 'Cancel anytime')}</span>
               </div>
             </div>
 
