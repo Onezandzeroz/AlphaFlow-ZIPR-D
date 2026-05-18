@@ -342,18 +342,12 @@ export function SubscriptionPlansPrompt() {
               <X className="h-4 w-4 sm:h-5 sm:w-5" />
             </button>
 
-            {/* Trial badge */}
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0d9488]/20 border border-[#0d9488]/30 mb-2.5 sm:mb-3">
-              <Gift className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-[#2dd4bf]" />
-              <span className="text-[10px] sm:text-xs font-medium text-[#2dd4bf] tracking-wide">
-                {t('2 MÅNEDER GRATIS PRØVEPERIODE · FULD ADGANG', '2-MONTH FREE TRIAL · FULL ACCESS')}
-              </span>
-            </div>
+
 
             <h2 className="text-xl sm:text-2xl lg:text-[1.65rem] font-bold text-white tracking-tight leading-tight">
               {t('Velkommen til AlphaFlow', 'Welcome to AlphaFlow')}
             </h2>
-            <p className="mt-1 text-[11px] sm:text-xs lg:text-sm text-white/50 max-w-2xl mx-auto leading-relaxed">
+            <p className="mt-1.5 text-xs sm:text-sm lg:text-base text-white/50 max-w-2xl mx-auto leading-relaxed">
               {t(
                 'Du har 2 måneders gratis adgang. Vælg en plan der passer til din virksomhed.',
                 'You have 2 months of free access. Pick a plan that fits your business.',
@@ -394,8 +388,18 @@ export function SubscriptionPlansPrompt() {
                       </div>
                     )}
 
+                    {/* Trial badge (only on Free card) */}
+                    {isFree && (
+                      <div className="mx-auto mb-2 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#0d9488]/20 border border-[#0d9488]/30">
+                        <Gift className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-[#2dd4bf]" />
+                        <span className="text-[9px] sm:text-[10px] font-semibold text-[#2dd4bf] tracking-wide leading-tight">
+                          {t('2 MDR. GRATIS · FULD ADGANG', '2 MOS. FREE · FULL ACCESS')}
+                        </span>
+                      </div>
+                    )}
+
                     {/* ── Plan name ── */}
-                    <p className={`text-[11px] sm:text-xs lg:text-sm font-bold uppercase tracking-wider
+                    <p className={`text-xs sm:text-sm lg:text-base font-bold uppercase tracking-wider
                       ${isPopular ? 'text-[#f59e0b]' : isFree ? 'text-[#2dd4bf]/70' : 'text-[#2dd4bf]'}
                     `}>
                       {plan.name}
@@ -403,11 +407,11 @@ export function SubscriptionPlansPrompt() {
 
                     {/* ── Price block ── */}
                     <div className="mt-1.5 sm:mt-2">
-                      <p className="text-lg sm:text-xl lg:text-2xl font-bold text-white tracking-tight leading-none">
+                      <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-white tracking-tight leading-none">
                         {isDa ? plan.priceDa : plan.priceEn}
                       </p>
                       {plan.priceUnitDa && (
-                        <p className="text-[9px] sm:text-[10px] lg:text-xs text-white/35 mt-0.5">
+                        <p className="text-[10px] sm:text-xs lg:text-sm text-white/35 mt-0.5">
                           {isDa ? plan.priceUnitDa : plan.priceUnitEn}
                         </p>
                       )}
@@ -416,25 +420,25 @@ export function SubscriptionPlansPrompt() {
                     {/* ── Savings badge ── */}
                     {plan.savingsDa && (
                       <div className="mt-1 sm:mt-1.5 inline-flex justify-center">
-                        <span className="text-[9px] sm:text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                        <span className="text-[10px] sm:text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
                           {isDa ? plan.savingsDa : plan.savingsEn}
                         </span>
                       </div>
                     )}
 
                     {/* ── Description ── */}
-                    <p className="mt-2 sm:mt-2.5 text-[9px] sm:text-[10px] lg:text-[11px] text-white/45 leading-relaxed">
+                    <p className="mt-2 sm:mt-2.5 text-[10px] sm:text-xs lg:text-sm text-white/45 leading-relaxed">
                       {isDa ? plan.descDa : plan.descEn}
                     </p>
 
                     {/* ── Features list (flex-1 fills available space) ── */}
-                    <ul className="mt-2.5 sm:mt-3 flex-1 space-y-1 text-left">
+                    <ul className="mt-2.5 sm:mt-3 flex-1 space-y-1.5 text-left">
                       {plan.features.map((feat, i) => (
                         <li key={i} className="flex items-start gap-1.5">
-                          <Check className={`shrink-0 mt-px h-3 w-3 sm:h-3.5 sm:w-3.5
+                          <Check className={`shrink-0 mt-0.5 h-3.5 w-3.5 sm:h-4 sm:w-4
                             ${isFree ? 'text-[#2dd4bf]/60' : isPopular ? 'text-[#f59e0b]/80' : 'text-[#2dd4bf]/80'}`}
                           />
-                          <span className="text-[9px] sm:text-[10px] lg:text-[11px] text-white/55 leading-snug">
+                          <span className="text-[10px] sm:text-xs lg:text-sm text-white/55 leading-snug">
                             {isDa ? feat.da : feat.en}
                           </span>
                         </li>
@@ -444,11 +448,11 @@ export function SubscriptionPlansPrompt() {
                     {/* ── Binding / Limitation ── */}
                     <div className="mt-2 sm:mt-2.5 pt-2 sm:pt-2.5 border-t border-white/[0.06] space-y-0.5">
                       {isFree && plan.limitDa && (
-                        <p className="text-[9px] sm:text-[10px] text-white/30">
+                        <p className="text-[10px] sm:text-xs text-white/30">
                           {isDa ? `Begrænsning: ${plan.limitDa}` : `Limit: ${plan.limitEn}`}
                         </p>
                       )}
-                      <p className="text-[9px] sm:text-[10px] text-white/30">
+                      <p className="text-[10px] sm:text-xs text-white/30">
                         {isDa ? `Binding: ${plan.bindDa}` : `Commitment: ${plan.bindEn}`}
                       </p>
                     </div>
@@ -456,8 +460,8 @@ export function SubscriptionPlansPrompt() {
                     {/* ── CTA button (pinned to bottom via mt-auto) ── */}
                     <button
                       type="button"
-                      className={`mt-auto pt-2.5 sm:pt-3 w-full flex items-center justify-center gap-1
-                        h-8 sm:h-9 lg:h-10 px-2 sm:px-3 rounded-lg text-[10px] sm:text-xs lg:text-sm font-semibold
+                      className={`mt-auto pt-2.5 sm:pt-3 w-full flex items-center justify-center gap-1.5
+                        h-9 sm:h-10 lg:h-11 px-2 sm:px-3 rounded-lg text-xs sm:text-sm lg:text-base font-semibold
                         transition-all duration-200 hover:shadow-md active:scale-[0.97]
                         ${isPopular
                           ? 'bg-[#f59e0b] hover:bg-[#d97706] text-white shadow-[#f59e0b]/20'
@@ -466,8 +470,8 @@ export function SubscriptionPlansPrompt() {
                             : 'bg-[#0d9488]/80 hover:bg-[#0d9488] text-white/90 hover:text-white border border-[#0d9488]/40'
                         }`}
                     >
-                      <span>{isDa ? plan.ctaDa : plan.ctaEn}</span>
-                      <ArrowRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 opacity-60 group-hover:opacity-100 transition-opacity" />
+                      <span className="leading-none">{isDa ? plan.ctaDa : plan.ctaEn}</span>
+                      <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 opacity-60 group-hover:opacity-100 transition-opacity" />
                     </button>
                   </div>
                 );
@@ -478,7 +482,7 @@ export function SubscriptionPlansPrompt() {
           {/* ── Bottom bar ── */}
           <div className="relative shrink-0 border-t border-white/[0.06] px-5 sm:px-8 py-3 sm:py-4">
             {/* Features row */}
-            <div className="flex items-center justify-center gap-3 sm:gap-5 lg:gap-6 text-white/35 text-[9px] sm:text-[10px] lg:text-xs">
+            <div className="flex items-center justify-center gap-3 sm:gap-5 lg:gap-6 text-white/35 text-[10px] sm:text-xs lg:text-sm">
               <div className="flex items-center gap-1">
                 <Gift className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-[#2dd4bf]/70" />
                 <span>{t('2 måneder gratis', '2 months free')}</span>
@@ -498,7 +502,7 @@ export function SubscriptionPlansPrompt() {
             </div>
 
             {/* Bottom branding */}
-            <div className="mt-2.5 sm:mt-3 flex items-center justify-center gap-2 text-white/15 text-[9px] sm:text-[10px] tracking-widest">
+            <div className="mt-2.5 sm:mt-3 flex items-center justify-center gap-2 text-white/15 text-[10px] sm:text-xs tracking-widest">
               <Lock className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
               <span>WEB ACCESS PROOF &middot; .TBKEY</span>
               <Lock className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
