@@ -5,6 +5,7 @@ import { requirePermission, tenantFilter, Permission, blockOversightMutation, re
 import { requireTokenPayAccess } from '@/lib/tokenpay';
 import { auditCreate, auditUpdate, auditLog, requestMetadata } from '@/lib/audit';
 import { logger } from '@/lib/logger';
+import { notifyOwner } from '@/lib/notify-owner';
 
 // GET /api/company - Get active company info
 export async function GET(request: NextRequest) {
@@ -263,6 +264,20 @@ export async function PUT(request: NextRequest) {
     const newData: Record<string, unknown> = { companyName: company.name, cvrNumber: company.cvrNumber };
     await auditUpdate(ctx.id, 'Company', existing.id, oldData, newData, requestMetadata(request), ctx.activeCompanyId);
 
+    // ─── Notify app owner on first complete company save ───────
+    // Detect: previously empty required fields → now all filled.
+    // "Complete" means: name (always set), address, cvrNumber, phone all have content.
+    const wasComplete = !!(existing.address?.trim() && existing.cvrNumber?.trim() && existing.phone?.trim());
+    const isNowComplete = !!(company.address?.trim() && company.cvrNumber?.trim() && company.phone?.trim());
+    if (!wasComplete && isNowComplete) {
+      notifyOwner(
+        'Ny virksomhed fuldført',
+        buildCompanyCompleteEmail(company, ctx.id, ctx.email),
+        { event: 'company_completed', userId: ctx.id, companyId: company.id, companyName: company.name },
+        'da'
+      ).catch(() => { /* fire-and-forget */ });
+    }
+
     const companyInfo = {
       id: company.id,
       logo: company.logo,
@@ -293,6 +308,60 @@ export async function PUT(request: NextRequest) {
     logger.error('Failed to update company:', error);
     return NextResponse.json({ error: 'Failed to update company' }, { status: 500 });
   }
+}
+
+// ─── Email Builder ──────────────────────────────────────────────────
+
+/**
+ * Build a nicely formatted HTML email body for the app owner
+ * when a tenant completes their company information for the first time.
+ */
+function buildCompanyCompleteEmail(
+  company: {
+    name: string;
+    email: string;
+    address: string;
+    phone: string;
+    cvrNumber: string;
+    companyType: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+  },
+  userId: string,
+  userEmail: string,
+): string {
+  const now = new Date().toLocaleString('da-DK');
+  const created = new Date(company.createdAt).toLocaleString('da-DK');
+  const row = (label: string, value: string) =>
+    `<tr><td style="padding:8px 12px;font-weight:600;color:#374151;white-space:nowrap;vertical-align:top;border-bottom:1px solid #f3f4f6;">${label}</td><td style="padding:8px 12px;color:#6b7280;border-bottom:1px solid #f3f4f6;">${value || '<em style="color:#9ca3af;">—</em>'}</td></tr>`;
+
+  return `
+    <p style="margin:0 0 16px;font-size:14px;color:#374151;">
+      En ny virksomhed har fuldført deres virksomhedsoplysninger i AlphaFlow:
+    </p>
+    <table style="width:100%;border-collapse:collapse;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;margin:0 0 20px;">
+      <tbody>
+        ${row('Virksomhed', company.name)}
+        ${row('CVR-nummer', company.cvrNumber)}
+        ${row('Type', company.companyType || '—')}
+        ${row('Adresse', company.address)}
+        ${row('Telefon', company.phone)}
+        ${row('E-mail', company.email)}
+        ${row('Bruger', userEmail)}
+      </tbody>
+    </table>
+    <table style="width:100%;border-collapse:collapse;margin:0 0 20px;">
+      <tbody>
+        <tr>
+          <td style="padding:6px 12px;font-size:12px;color:#9ca3af;">Registreret: ${created}</td>
+          <td style="padding:6px 12px;font-size:12px;color:#9ca3af;text-align:right;">Fuldført: ${now}</td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="margin:0;font-size:12px;color:#9ca3af;">
+      Dette er en automatisk notifikation fra AlphaFlow.
+    </p>
+  `;
 }
 
 // DELETE /api/company - Reset all data (with audit trail)

@@ -4,7 +4,6 @@ import { hashPassword } from '@/lib/password';
 import { rateLimit, getClientIp } from '@/lib/rate-limit';
 import { auditAuth, requestMetadata } from '@/lib/audit';
 import { sendVerificationEmail } from '@/lib/email-service';
-import { notifyOwner } from '@/lib/notify-owner';
 import { logger } from '@/lib/logger';
 import { tokenpay, grantTrial } from '@/lib/tokenpay';
 import crypto from 'crypto';
@@ -154,18 +153,7 @@ export async function POST(request: NextRequest) {
     // The user must verify their email before they can log in.
     // The register form shows a "check your email" screen instead.
 
-    // Notify app owner about new tenant (fire-and-forget, non-blocking)
-    notifyOwner(
-      'Ny tenant registreret',
-      `<p>En ny bruger har registreret sig:</p>
-      <ul>
-        <li><strong>Email:</strong> ${normalizedEmail}</li>
-        <li><strong>Virksomhed:</strong> ${company.name}</li>
-        <li><strong>Dato:</strong> ${new Date().toLocaleString('da-DK')}</li>
-      </ul>`,
-      { event: 'new_tenant', userId: user.id, companyId: company.id, companyName: company.name },
-      'da'
-    );
+    // (Notification to app owner is sent on first complete company save — see PUT /api/company)
 
     // Audit registration
     await auditAuth(user.id, 'REGISTER', requestMetadata(request), company.id);

@@ -123,6 +123,18 @@ export function CompanySettingsPage({ user, onNavigate }: CompanySettingsPagePro
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+
+  // ── Company info completeness check ──
+  // Checks actual field content, not just object existence.
+  // Required fields: name, address, cvrNumber. Bank fields are separate.
+  const companyInfoComplete = useMemo(() => {
+    if (!companyInfo) return false;
+    const hasName = !!companyInfo.companyName?.trim();
+    const hasAddress = !!companyInfo.address?.trim();
+    const hasCvr = !!companyInfo.cvrNumber?.trim();
+    const hasPhone = !!companyInfo.phone?.trim();
+    return hasName && hasAddress && hasCvr && hasPhone;
+  }, [companyInfo]);
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [showBankPreview, setShowBankPreview] = useState(true);
 
@@ -449,11 +461,11 @@ export function CompanySettingsPage({ user, onNavigate }: CompanySettingsPagePro
               <div>
                 <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-none">{t('companyInformation')}</p>
                 <p className={`text-[11px] font-bold mt-0.5 ${
-                  companyInfo
+                  companyInfoComplete
                     ? 'text-green-600 dark:text-green-400'
                     : 'text-amber-600 dark:text-amber-400'
                 }`}>
-                  {companyInfo
+                  {companyInfoComplete
                     ? (language === 'da' ? 'Komplet' : 'Complete')
                     : (language === 'da' ? 'Mangler' : 'Incomplete')}
                 </p>
@@ -509,11 +521,11 @@ export function CompanySettingsPage({ user, onNavigate }: CompanySettingsPagePro
                   {t('companyInformation')}
                 </p>
                 <p className={`text-xs font-bold mt-0.5 ${
-                  companyInfo
+                  companyInfoComplete
                     ? 'text-green-600 dark:text-green-400'
                     : 'text-amber-600 dark:text-amber-400'
                 }`}>
-                  {companyInfo
+                  {companyInfoComplete
                     ? (language === 'da' ? 'Komplet' : 'Complete')
                     : (language === 'da' ? 'Mangler' : 'Incomplete')}
                 </p>
