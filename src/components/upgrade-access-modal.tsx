@@ -3,6 +3,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from '@/lib/use-translation';
 import { useUpgradeModalStore } from '@/lib/upgrade-modal-store';
+import { useSubscriptionPlansStore } from '@/lib/subscription-plans-store';
 import {
   Clock,
   ArrowRight,
@@ -76,11 +77,10 @@ export function UpgradeAccessModal() {
 
   const handlePurchaseToken = useCallback(() => {
     dismiss();
-    const targetHash = '#settings?tab=access';
-    window.location.hash = targetHash;
-    window.dispatchEvent(new CustomEvent('app:navigate', {
-      detail: { view: 'settings', hash: targetHash },
-    }));
+    // Small delay so the upgrade modal finishes its exit animation first
+    setTimeout(() => {
+      useSubscriptionPlansStore.getState().show();
+    }, 200);
   }, [dismiss]);
 
   if (!isOpen) return null;
@@ -222,14 +222,15 @@ export function UpgradeAccessModal() {
               <ArrowRight className="h-4 w-4 ml-auto" />
             </button>
 
-            {/* Secondary CTA — Purchase Token */}
+            {/* Secondary CTA — Purchase Access Key (opens subscription plans) */}
             <button
               type="button"
               onClick={handlePurchaseToken}
-              className="flex items-center justify-center gap-2.5 w-full h-11 px-5 text-sm font-medium rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/[0.04] text-gray-700 dark:text-gray-300 cursor-pointer transition-all duration-200 hover:bg-gray-50 dark:hover:bg-white/[0.08]"
+              className="flex items-center justify-center gap-2.5 w-full h-11 px-5 text-sm font-semibold rounded-xl border-0 cursor-pointer transition-all duration-200 hover:shadow-md active:scale-[0.98] bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-amber-500/20"
             >
-              <Sparkles className="h-4 w-4 text-gray-500 dark:text-gray-400 shrink-0" />
+              <Sparkles className="h-4 w-4 shrink-0" />
               <span>{t('upgradePurchaseToken')}</span>
+              <ArrowRight className="h-4 w-4 ml-auto" />
             </button>
           </div>
         </div>

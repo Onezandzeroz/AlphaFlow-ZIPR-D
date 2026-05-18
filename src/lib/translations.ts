@@ -1747,8 +1747,8 @@ export const translations = {
     en: 'Upload .tbkey Proof',
   },
   upgradePurchaseToken: {
-    da: 'Køb adgangstoken',
-    en: 'Purchase Access Token',
+    da: 'Køb adgangsnøgle',
+    en: 'Purchase Access Key',
   },
 
   // ========== RBAC / PERMISSION ERRORS ==========

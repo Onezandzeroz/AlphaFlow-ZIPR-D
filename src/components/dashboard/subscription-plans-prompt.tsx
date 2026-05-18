@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from '@/lib/use-translation';
 import { useAuthStore } from '@/lib/auth-store';
+import { useSubscriptionPlansStore } from '@/lib/subscription-plans-store';
 import {
   X,
   ArrowRight,
@@ -183,6 +184,19 @@ export function SubscriptionPlansPrompt() {
   // reference changes (Zustand persist re-save), causing the prompt to never appear.
   const hasScheduled = useRef(false);
 
+  // Subscribe to external trigger store changes (fire-and-forget, no setState in effect body)
+  useEffect(() => {
+    const unsub = useSubscriptionPlansStore.subscribe((state) => {
+      if (state.isOpen) {
+        // Show immediately on external trigger — runs inside Zustand's subscribe callback,
+        // which is safe from React's "set-state-in-effect" rule.
+        setAnimatingIn(true);
+        setVisible(true);
+      }
+    });
+    return unsub;
+  }, []);
+
   // Detect first-login per user via localStorage flags.
   // Keys include user.id so different users on the same browser each get
   // their own first-login prompt. The Zustand persist layer strips
@@ -226,6 +240,7 @@ export function SubscriptionPlansPrompt() {
       if (user?.id) {
         localStorage.setItem(`${DISMISSED_PREFIX}${user.id}`, 'true');
       }
+      useSubscriptionPlansStore.getState().dismiss();
     }, 300);
   }, [user]);
 
